@@ -397,77 +397,288 @@ function getGlobalSelectedEnvKeys() {
 //   }
 // }
 
-// async function fetchSchedulerRecordsForApp(app, orgId) {
-//   const envId = app?.environment?.id;
-//   const bgId = app?._bgId || orgId;
-//   if (!bgId || !envId) return [];
+async function fetchSchedulerRecordsForApp(app, orgId) {
+  const envId = app?.environment?.id || app?._envId;
+  const bgId = app?._bgId || orgId;
 
-//   try {
-//     const detailUrl = app?.deploymentType === 'CloudHub 2.0'
-//       ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}`
-//       : `/applications/cloudhub1/${envId}/${app.id}?orgId=${bgId}`;
+  if (!bgId || !envId || !app?.id) {
+    return [];
+  }
 
-//     const detailRes = await api.get(detailUrl);
-//     const detail = detailRes?.data || app;
+  try {
+    /*
+     * ============================================================
+     * STEP 1 — FETCH SCHEDULES FIRST
+     *
+     * This is intentionally before application detail and CPS.
+     * CPS must NEVER be fetched for applications that have no
+     * schedulers/schedules.
+     * ============================================================
+     */
 
-//     const ds = detail.target?.deploymentSettings || {};
-//     const appCfg = detail.application?.configuration || {};
-//     const propsSvc = appCfg['mule.agent.application.properties.service'] || {};
-//     const runtimeProps = {
-//       ...(propsSvc.properties || {}),
-//       ...(ds.properties || {}),
-//       ...(ds.environmentVariables || ds.environmentVars || {}),
-//       ...(detail.properties || {}),
-//       ...(detail.application?.properties || {}),
-//     };
+    const schedUrl =
+      app?.deploymentType === 'CloudHub 2.0'
+        ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}/schedulers`
+        : `/applications/cloudhub1/${envId}/${app.id}/schedules?orgId=${encodeURIComponent(bgId)}`;
 
-//     const cpsMap = await fetchCpsProperties(detail, bgId);
+    console.info(
+      '[HelperPage] Checking schedules:',
+      {
+        app: app.name,
+        deploymentType: app.deploymentType,
+        bgId,
+        envId,
+      }
+    );
 
-//     const schedUrl = app?.deploymentType === 'CloudHub 2.0'
-//       ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}/schedulers`
-//       : `/applications/cloudhub1/${envId}/${app.id}/schedules?orgId=${bgId}`;
+    const schedRes = await api.get(schedUrl);
 
-//     const schedRes = await api.get(schedUrl);
-//     const data = schedRes?.data || [];
-//     const rawItems = Array.isArray(data)
-//       ? data
-//       : (Array.isArray(data.schedulers) ? data.schedulers : Array.isArray(data.schedules) ? data.schedules : Array.isArray(data.items) ? data.items : []);
+    const data = schedRes?.data || [];
 
-//     return rawItems.map((scheduler, index) => {
-//       const flowName = scheduler.flow || scheduler.flowName || scheduler.name || scheduler.schedulerName || `scheduler-${index}`;
-//       const rawCron = scheduler.schedule?.cronExpression || scheduler.schedule?.expression || scheduler.expression || scheduler.cronExpression || '';
-//       const startValue = scheduler.startTime || scheduler.startDate || scheduler.startedAt || scheduler.schedule?.startTime || scheduler.schedule?.startDate || '';
-//       const nextRawValue = scheduler.nextRun || scheduler.nextExecution || scheduler.schedule?.nextRun || scheduler.schedule?.nextExecution || scheduler.nextRunTime || '';
-//       const resolvedCron = resolveCronExpression(rawCron, runtimeProps, cpsMap);
+    const rawItems = Array.isArray(data)
+      ? data
+      : (
+          Array.isArray(data.schedulers)
+            ? data.schedulers
+            : Array.isArray(data.schedules)
+              ? data.schedules
+              : Array.isArray(data.items)
+                ? data.items
+                : Array.isArray(data.data)
+                  ? data.data
+                  : []
+        );
 
-//       let readableCron = '';
-//       if (resolvedCron) {
-//         try {
-//           readableCron = cronstrue.toString(resolvedCron, { throwExceptionOnParseError: true });
-//         } catch {
-//           readableCron = '';
-//         }
-//       }
+    /*
+     * ============================================================
+     * IMPORTANT:
+     * No schedules = do NOT fetch detail.
+     * No schedules = do NOT fetch CPS.
+     * No schedules = application is excluded.
+     * ============================================================
+     */
 
-//       const startTime = parseDateValue(startValue);
-//       const nextExecution = parseDateValue(nextRawValue) || (resolvedCron ? getNextCronRun(resolvedCron) : null);
+    if (rawItems.length === 0) {
+      console.info(
+        '[HelperPage] No schedules — skipping CPS:',
+        app.name
+      );
 
-//       return {
-//         id: `${detail.name || app.name}-${flowName}-${index}`,
-//         jobName: flowName,
-//         appName: detail.name || app.name,
-//         environment: detail.environment?.name || detail.environment?.environmentName || app.environment?.name || app.environment?.environmentName || '',
-//         cron: resolvedCron,
-//         decryptedCron: readableCron,
-//         startTime,
-//         nextExecution,
-//       };
-//     });
-//   } catch (error) {
-//     console.warn('[HelperPage] fetchSchedulerRecordsForApp failed:', error);
-//     return [];
-//   }
-// }
+      return [];
+    }
+
+    console.info(
+      `[HelperPage] ${app.name} has ${rawItems.length} schedule(s) — CPS lookup allowed.`
+    );
+
+    /*
+     * ============================================================
+     * STEP 2 — ONLY NOW FETCH APPLICATION DETAIL
+     * ============================================================
+     */
+
+    const detailUrl =
+      app?.deploymentType === 'CloudHub 2.0'
+        ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}`
+        : `/applications/cloudhub1/${envId}/${app.id}?orgId=${encodeURIComponent(bgId)}`;
+
+    const detailRes = await api.get(detailUrl);
+    const detail = detailRes?.data || app;
+
+    /*
+     * ============================================================
+     * STEP 3 — BUILD RUNTIME PROPERTIES
+     * ============================================================
+     */
+
+    const ds =
+      detail?.target?.deploymentSettings || {};
+
+    const appCfg =
+      detail?.application?.configuration || {};
+
+    const propsSvc =
+      appCfg[
+        'mule.agent.application.properties.service'
+      ] || {};
+
+    const runtimeProps = {
+      ...(propsSvc.properties || {}),
+      ...(ds.properties || {}),
+      ...(ds.environmentVariables || {}),
+      ...(ds.environmentVars || {}),
+      ...(detail?.properties || {}),
+      ...(detail?.application?.properties || {}),
+    };
+
+    /*
+     * ============================================================
+     * STEP 4 — ONLY SCHEDULED APPS FETCH CPS
+     * ============================================================
+     */
+
+    const cpsMap =
+      await fetchCpsProperties(
+        detail,
+        bgId
+      );
+
+    console.info(
+      '[HelperPage] CPS lookup completed:',
+      {
+        app:
+          detail?.name ||
+          app?.name,
+
+        scheduleCount:
+          rawItems.length,
+
+        cpsKeys:
+          Object.keys(cpsMap || {}).length,
+      }
+    );
+
+    /*
+     * ============================================================
+     * STEP 5 — RESOLVE EACH SCHEDULER
+     * ============================================================
+     */
+
+    return rawItems.map(
+      (scheduler, index) => {
+        const flowName =
+          scheduler.flow ||
+          scheduler.flowName ||
+          scheduler.name ||
+          scheduler.schedulerName ||
+          `scheduler-${index + 1}`;
+
+        const rawCron =
+          scheduler.schedule?.cronExpression ||
+          scheduler.schedule?.expression ||
+          scheduler.expression ||
+          scheduler.cronExpression ||
+          '';
+
+        const startValue =
+          scheduler.startTime ||
+          scheduler.startDate ||
+          scheduler.startedAt ||
+          scheduler.schedule?.startTime ||
+          scheduler.schedule?.startDate ||
+          '';
+
+        const nextRawValue =
+          scheduler.nextRun ||
+          scheduler.nextExecution ||
+          scheduler.schedule?.nextRun ||
+          scheduler.schedule?.nextExecution ||
+          scheduler.nextRunTime ||
+          '';
+
+        const resolvedCron =
+          resolveCronExpression(
+            rawCron,
+            runtimeProps,
+            cpsMap
+          );
+
+        let readableCron = '';
+
+        if (resolvedCron) {
+          try {
+            readableCron =
+              cronstrue.toString(
+                resolvedCron,
+                {
+                  throwExceptionOnParseError:
+                    true,
+                }
+              );
+          } catch {
+            readableCron = '';
+          }
+        }
+
+        const startTime =
+          parseDateValue(
+            startValue
+          );
+
+        const nextExecution =
+          parseDateValue(
+            nextRawValue
+          ) ||
+          (
+            resolvedCron
+              ? getNextCronRun(
+                  resolvedCron
+                )
+              : null
+          );
+
+        return {
+          id:
+            `${app.deploymentType}:${bgId}:${envId}:${app.id}:${flowName}:${index}`,
+
+          jobName:
+            flowName,
+
+          appName:
+            detail.name ||
+            app.name,
+
+          environment:
+            detail.environment?.name ||
+            detail.environment?.environmentName ||
+            app.environment?.name ||
+            app.environment?.environmentName ||
+            '',
+
+          cron:
+            resolvedCron,
+
+          decryptedCron:
+            readableCron,
+
+          startTime,
+
+          nextExecution,
+
+          scheduleCount:
+            rawItems.length,
+
+          deploymentType:
+            app.deploymentType,
+
+          environmentId:
+            envId,
+
+          businessGroupId:
+            bgId,
+        };
+      }
+    );
+
+  } catch (error) {
+    console.warn(
+      '[HelperPage] fetchSchedulerRecordsForApp failed:',
+      {
+        app:
+          app?.name ||
+          app?.id,
+
+        message:
+          error?.message,
+
+        status:
+          error?.response?.status,
+      }
+    );
+
+    return [];
+  }
+}
 
 async function resolveJobsFromCsv(
   csvText,
@@ -475,165 +686,591 @@ async function resolveJobsFromCsv(
   envKeys = [],
   envLabels = []
 ) {
-  const names = extractJobNames(csvText)
-    .map((value) =>
-      value.trim()
-    )
-    .filter(Boolean)
-    .map((value) =>
-      value.replace(
-        /\s+/g,
-        ' '
-      )
+  const hasCsv =
+    Boolean(
+      csvText &&
+      csvText.trim()
     );
 
+  const envScopeLabel =
+    Array.isArray(envLabels) &&
+    envLabels.length
+      ? envLabels.join(', ')
+      : 'Selected env scope';
+
   console.info(
-    '[HelperPage] CSV job names:',
-    names
+    '[HelperPage] ========================================'
   );
 
   console.info(
-    '[HelperPage] Selected Helper environments:',
+    '[HelperPage] Starting scheduler discovery'
+  );
+
+  console.info(
+    '[HelperPage] CSV uploaded:',
+    hasCsv
+  );
+
+  console.info(
+    '[HelperPage] Helper environments:',
     envKeys
   );
 
+  /*
+   * ============================================================
+   * PARSE SELECTED ENVIRONMENTS
+   *
+   * Values are:
+   *
+   *     BG_ID:ENV_ID
+   * ============================================================
+   */
+
   const selectedScopes =
-  (Array.isArray(envKeys)
-    ? envKeys
-    : []
-  )
-    .map((key) =>
-      String(key).trim()
+    (
+      Array.isArray(envKeys)
+        ? envKeys
+        : []
     )
-    .map((key) => {
-      const separator =
-        key.indexOf(':');
+      .map(
+        (key) =>
+          String(key).trim()
+      )
+      .map((key) => {
+        const separator =
+          key.indexOf(':');
 
-      if (separator <= 0) {
-        return null;
-      }
+        if (separator <= 0) {
+          return null;
+        }
 
-      const bgId =
-        key
-          .slice(
-            0,
-            separator
-          )
-          .trim();
+        const bgId =
+          key
+            .slice(
+              0,
+              separator
+            )
+            .trim();
 
-      const envId =
-        key
-          .slice(
-            separator + 1
-          )
-          .trim();
+        const envId =
+          key
+            .slice(
+              separator + 1
+            )
+            .trim();
 
-      if (!bgId || !envId) {
-        return null;
-      }
+        if (!bgId || !envId) {
+          return null;
+        }
 
-      return {
-        bgId,
-        envId,
-        envName: '',
-      };
-    })
-    .filter(Boolean);
+        return {
+          key,
+          bgId,
+          envId,
+        };
+      })
+      .filter(Boolean);
 
   if (!selectedScopes.length) {
-    return names.map(
-      (name, index) => ({
-        id:
-          `not-found-${index}`,
+    console.warn(
+      '[HelperPage] No valid environment scopes.'
+    );
 
-        jobName:
-          name,
+    return [];
+  }
 
-        appName:
-          'Not found',
+  console.info(
+    '[HelperPage] Parsed Helper scopes:',
+    selectedScopes
+  );
 
-        environment:
-          envLabels.join(
-            ', '
-          ),
+  /*
+   * ============================================================
+   * CSV FILTER
+   *
+   * CSV is ONLY a frontend filter.
+   *
+   * It does NOT control application discovery.
+   * It does NOT control scheduler discovery.
+   * It does NOT control CPS calls.
+   * ============================================================
+   */
 
-        cron: '',
-        decryptedCron: '',
-        startTime: null,
-        nextExecution: null,
-      })
+  let csvApplicationNames = [];
+
+  if (hasCsv) {
+    csvApplicationNames =
+      extractJobNames(csvText)
+        .map(
+          (value) =>
+            String(value)
+              .trim()
+              .replace(
+                /\s+/g,
+                ' '
+              )
+        )
+        .filter(Boolean);
+
+    console.info(
+      '[HelperPage] CSV values:',
+      csvApplicationNames
     );
   }
 
-  try {
-    const response =
-      await api.post(
-        '/helper/scheduler-details',
-        {
-          jobNames:
-            names,
+  /*
+   * ============================================================
+   * STEP 1 — FETCH APPLICATIONS
+   * ============================================================
+   */
 
-          environments:
-            selectedScopes,
+  const environmentApps = [];
+
+  const environmentConcurrency = 4;
+
+  let nextScopeIndex = 0;
+
+  const fetchAppsForScope =
+    async ({
+      bgId,
+      envId,
+    }) => {
+      const apps = [];
+
+      const [
+        ch2Result,
+        ch1Result,
+      ] =
+        await Promise.allSettled([
+          api.get(
+            `/applications/cloudhub2/${bgId}/${envId}`,
+            {
+              params: {
+                limit: 500,
+                offset: 0,
+              },
+            }
+          ),
+
+          api.get(
+            `/applications/cloudhub1/${envId}?orgId=${encodeURIComponent(bgId)}`
+          ),
+        ]);
+
+      /*
+       * CloudHub 2.0
+       */
+
+      if (
+        ch2Result.status ===
+        'fulfilled'
+      ) {
+        const data =
+          ch2Result.value?.data;
+
+        const list =
+          Array.isArray(data)
+            ? data
+            : data?.items ||
+              data?.deployments ||
+              data?.content ||
+              data?.data ||
+              [];
+
+        if (Array.isArray(list)) {
+          for (
+            const app
+            of list
+          ) {
+            const appId =
+              app?.id ||
+              app?.deploymentId;
+
+            if (!appId) {
+              continue;
+            }
+
+            apps.push({
+              ...app,
+
+              id:
+                appId,
+
+              name:
+                app?.name ||
+                app?.application?.name ||
+                appId,
+
+              deploymentType:
+                'CloudHub 2.0',
+
+              _bgId:
+                bgId,
+
+              _envId:
+                envId,
+
+              environment: {
+                ...(app?.environment || {}),
+                id:
+                  envId,
+              },
+            });
+          }
         }
-      );
+      }
 
-    const payload =
-      response?.data || {};
+      /*
+       * CloudHub 1.0
+       */
 
-    const backendRows =
-      Array.isArray(
-        payload.data
-      )
-        ? payload.data
-        : [];
+      if (
+        ch1Result.status ===
+        'fulfilled'
+      ) {
+        const data =
+          ch1Result.value?.data;
 
-    console.info(
-      '[HelperPage] Backend Helper response:',
+        const list =
+          Array.isArray(data)
+            ? data
+            : data?.applications ||
+              data?.data ||
+              [];
+
+        if (Array.isArray(list)) {
+          for (
+            const app
+            of list
+          ) {
+            const appName =
+              app?.domain ||
+              app?.name;
+
+            if (!appName) {
+              continue;
+            }
+
+            apps.push({
+              ...app,
+
+              id:
+                appName,
+
+              name:
+                appName,
+
+              deploymentType:
+                'CloudHub 1.0',
+
+              _bgId:
+                bgId,
+
+              _envId:
+                envId,
+
+              environment: {
+                ...(app?.environment || {}),
+                id:
+                  envId,
+              },
+            });
+          }
+        }
+      }
+
+      return apps;
+    };
+
+  const scopeWorker =
+    async () => {
+      while (
+        nextScopeIndex <
+        selectedScopes.length
+      ) {
+        const index =
+          nextScopeIndex++;
+
+        const scope =
+          selectedScopes[index];
+
+        try {
+          console.info(
+            `[HelperPage] Loading applications for ${scope.key} (${index + 1}/${selectedScopes.length})`
+          );
+
+          const apps =
+            await fetchAppsForScope(
+              scope
+            );
+
+          environmentApps.push(
+            ...apps
+          );
+
+          console.info(
+            `[HelperPage] ${scope.key}: ${apps.length} applications found.`
+          );
+        } catch (error) {
+          console.warn(
+            `[HelperPage] Application lookup failed for ${scope.key}:`,
+            error
+          );
+        }
+      }
+    };
+
+  await Promise.all(
+    Array.from(
       {
-        rows:
-          backendRows.length,
+        length:
+          Math.min(
+            environmentConcurrency,
+            selectedScopes.length
+          ),
+      },
+      () =>
+        scopeWorker()
+    )
+  );
 
-        meta:
-          payload.meta,
+  /*
+   * ============================================================
+   * STEP 2 — DEDUP APPLICATIONS
+   * ============================================================
+   */
 
-        failures:
-          payload.failures,
+  const uniqueApps =
+    Array.from(
+      new Map(
+        environmentApps.map(
+          (app) => [
+            `${app._bgId}:${app._envId}:${app.deploymentType}:${app.id}`,
+            app,
+          ]
+        )
+      ).values()
+    );
+
+  console.info(
+    '[HelperPage] Applications discovered:',
+    uniqueApps.length
+  );
+
+  /*
+   * ============================================================
+   * STEP 3 — FETCH SCHEDULES
+   *
+   * fetchSchedulerRecordsForApp() now guarantees:
+   *
+   *     schedule count = 0
+   *          ↓
+   *     no CPS
+   *
+   *     schedule count >= 1
+   *          ↓
+   *     CPS
+   * ============================================================
+   */
+
+  const scheduledRows = [];
+
+  const appConcurrency = 4;
+
+  let nextAppIndex = 0;
+
+  const appWorker =
+    async () => {
+      while (
+        nextAppIndex <
+        uniqueApps.length
+      ) {
+        const index =
+          nextAppIndex++;
+
+        const app =
+          uniqueApps[index];
+
+        try {
+          const schedulerRows =
+            await fetchSchedulerRecordsForApp(
+              app,
+              app._bgId ||
+                orgId
+            );
+
+          /*
+           * No scheduler = application
+           * is automatically excluded.
+           */
+
+          if (
+            schedulerRows.length ===
+            0
+          ) {
+            continue;
+          }
+
+          scheduledRows.push(
+            ...schedulerRows
+          );
+        } catch (error) {
+          console.warn(
+            `[HelperPage] Scheduler lookup failed for ${app.name || app.id}:`,
+            error
+          );
+        }
+      }
+    };
+
+  await Promise.all(
+    Array.from(
+      {
+        length:
+          Math.min(
+            appConcurrency,
+            uniqueApps.length
+          ),
+      },
+      () =>
+        appWorker()
+    )
+  );
+
+  console.info(
+    '[HelperPage] ========================================'
+  );
+
+  console.info(
+    '[HelperPage] Scheduled jobs discovered:',
+    scheduledRows.length
+  );
+
+  /*
+   * ============================================================
+   * STEP 4 — NO CSV
+   *
+   * Return every scheduled job.
+   * ============================================================
+   */
+
+  if (!hasCsv) {
+    console.info(
+      '[HelperPage] No CSV supplied — returning all scheduled jobs.'
+    );
+
+    return scheduledRows;
+  }
+
+  /*
+   * ============================================================
+   * STEP 5 — CSV FILTER AT FRONTEND
+   *
+   * IMPORTANT:
+   * Match CSV values against APPLICATION NAME,
+   * not scheduler/job name.
+   * ============================================================
+   */
+
+  const normalizedCsvApps =
+    csvApplicationNames
+      .map(
+        (name) =>
+          normalizeName(name)
+      )
+      .filter(Boolean);
+
+  if (
+    !normalizedCsvApps.length
+  ) {
+    console.warn(
+      '[HelperPage] CSV contains no usable application names.'
+    );
+
+    return scheduledRows;
+  }
+
+  const filteredRows =
+    scheduledRows.filter(
+      (row) => {
+        const appName =
+          normalizeName(
+            row.appName
+          );
+
+        if (!appName) {
+          return false;
+        }
+
+        return normalizedCsvApps.some(
+          (csvAppName) =>
+            appName ===
+              csvAppName ||
+            appName.includes(
+              csvAppName
+            ) ||
+            csvAppName.includes(
+              appName
+            )
+        );
       }
     );
 
-    /*
-     * Convert backend date strings back
-     * into Date objects because the existing
-     * table/export code expects Date objects.
-     */
-    return backendRows.map(
-      (row, index) => ({
-        ...row,
+  console.info(
+    '[HelperPage] CSV application filter:',
+    {
+      csvApplications:
+        normalizedCsvApps.length,
 
+      before:
+        scheduledRows.length,
+
+      after:
+        filteredRows.length,
+    }
+  );
+
+  /*
+   * If CSV applications were supplied but
+   * none were found, return explicit rows
+   * so the user knows which CSV entries
+   * were not discovered.
+   */
+
+  if (
+    filteredRows.length ===
+    0
+  ) {
+    return csvApplicationNames.map(
+      (appName, index) => ({
         id:
-          row.id ||
-          `helper-${index}`,
+          `not-found-app-${index}-${normalizeName(appName)}`,
+
+        jobName:
+          'Not found',
+
+        appName:
+          appName,
+
+        environment:
+          envScopeLabel,
+
+        cron:
+          '',
+
+        decryptedCron:
+          '',
 
         startTime:
-          parseDateValue(
-            row.startTime
-          ),
+          null,
 
         nextExecution:
-          parseDateValue(
-            row.nextExecution
-          ),
+          null,
       })
     );
-  } catch (error) {
-    console.error(
-      '[HelperPage] Backend Helper request failed:',
-      error
-    );
-
-    throw error;
   }
+
+  return filteredRows;
 }
 
 export default function HelperPage() {
