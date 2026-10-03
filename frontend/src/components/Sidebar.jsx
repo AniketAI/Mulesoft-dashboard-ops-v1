@@ -12,7 +12,7 @@ import {
   Wrench,
   ChevronRight,
   ChevronDown,
-  BriefcaseBusiness
+  Briefcase
 } from 'lucide-react';
 
 const navItems = [
@@ -83,7 +83,7 @@ function HelperNavSection({ open, location }) {
               }`
             }
           >
-            <BriefcaseBusiness size={14} />
+            <Briefcase size={14} />
             <span>Job Helper</span>
           </NavLink>
         </div>

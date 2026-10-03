@@ -349,424 +349,299 @@ function getGlobalSelectedEnvKeys() {
   }
 }
 
-async function fetchCpsProperties(app, orgId) {
-  try {
-    const ds = app?.target?.deploymentSettings || {};
-    const appCfg = app?.application?.configuration || {};
-    const propsSvc = appCfg['mule.agent.application.properties.service'] || {};
-    const runtimeProps = {
-      ...(propsSvc.properties || {}),
-      ...(ds.properties || {}),
-      ...(ds.environmentVariables || ds.environmentVars || {}),
-      ...(app?.properties || {}),
-    };
+// async function fetchCpsProperties(app, orgId) {
+//   try {
+//     const ds = app?.target?.deploymentSettings || {};
+//     const appCfg = app?.application?.configuration || {};
+//     const propsSvc = appCfg['mule.agent.application.properties.service'] || {};
+//     const runtimeProps = {
+//       ...(propsSvc.properties || {}),
+//       ...(ds.properties || {}),
+//       ...(ds.environmentVariables || ds.environmentVars || {}),
+//       ...(app?.properties || {}),
+//     };
 
-    const cpsBaseUrl = runtimeProps['cps.configServerBaseUrl'] || runtimeProps['config.server.base.url'];
-    if (!cpsBaseUrl) return {};
+//     const cpsBaseUrl = runtimeProps['cps.configServerBaseUrl'] || runtimeProps['config.server.base.url'];
+//     if (!cpsBaseUrl) return {};
 
-    const projectName = runtimeProps['cps.projectName'] || runtimeProps['cloudhub.api.name'] || app?.name;
-    const cpsEnv = runtimeProps['cps.prefix'] || runtimeProps['cps.environment'] || 'uat';
+//     const projectName = runtimeProps['cps.projectName'] || runtimeProps['cloudhub.api.name'] || app?.name;
+//     const cpsEnv = runtimeProps['cps.prefix'] || runtimeProps['cps.environment'] || 'uat';
 
-    const response = await api.get('/cps/fetch', {
-      params: {
-        baseUrl: cpsBaseUrl,
-        type: 'non-secure',
-        environment: cpsEnv,
-        keys: projectName,
-        bgOrgId: orgId,
-      },
-    });
+//     const response = await api.get('/cps/fetch', {
+//       params: {
+//         baseUrl: cpsBaseUrl,
+//         type: 'non-secure',
+//         environment: cpsEnv,
+//         keys: projectName,
+//         bgOrgId: orgId,
+//       },
+//     });
 
-    const data = response?.data || {};
-    const entries = Array.isArray(data) ? data : Array.isArray(data.responses) ? data.responses : Array.isArray(data.properties) ? data.properties : null;
-    if (entries) {
-      const match = entries.find((entry) => entry.key === projectName) || entries[0];
-      const properties = match?.properties || match;
-      if (properties && typeof properties === 'object' && !Array.isArray(properties)) return properties;
-    }
+//     const data = response?.data || {};
+//     const entries = Array.isArray(data) ? data : Array.isArray(data.responses) ? data.responses : Array.isArray(data.properties) ? data.properties : null;
+//     if (entries) {
+//       const match = entries.find((entry) => entry.key === projectName) || entries[0];
+//       const properties = match?.properties || match;
+//       if (properties && typeof properties === 'object' && !Array.isArray(properties)) return properties;
+//     }
 
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      const first = Object.values(data)[0];
-      if (first && typeof first === 'object' && !Array.isArray(first)) return first;
-      return data;
-    }
+//     if (data && typeof data === 'object' && !Array.isArray(data)) {
+//       const first = Object.values(data)[0];
+//       if (first && typeof first === 'object' && !Array.isArray(first)) return first;
+//       return data;
+//     }
 
-    return {};
-  } catch {
-    return {};
-  }
-}
+//     return {};
+//   } catch {
+//     return {};
+//   }
+// }
 
-async function fetchSchedulerRecordsForApp(app, orgId) {
-  const envId = app?.environment?.id;
-  const bgId = app?._bgId || orgId;
-  if (!bgId || !envId) return [];
+// async function fetchSchedulerRecordsForApp(app, orgId) {
+//   const envId = app?.environment?.id;
+//   const bgId = app?._bgId || orgId;
+//   if (!bgId || !envId) return [];
 
-  try {
-    const detailUrl = app?.deploymentType === 'CloudHub 2.0'
-      ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}`
-      : `/applications/cloudhub1/${envId}/${app.id}?orgId=${bgId}`;
+//   try {
+//     const detailUrl = app?.deploymentType === 'CloudHub 2.0'
+//       ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}`
+//       : `/applications/cloudhub1/${envId}/${app.id}?orgId=${bgId}`;
 
-    const detailRes = await api.get(detailUrl);
-    const detail = detailRes?.data || app;
+//     const detailRes = await api.get(detailUrl);
+//     const detail = detailRes?.data || app;
 
-    const ds = detail.target?.deploymentSettings || {};
-    const appCfg = detail.application?.configuration || {};
-    const propsSvc = appCfg['mule.agent.application.properties.service'] || {};
-    const runtimeProps = {
-      ...(propsSvc.properties || {}),
-      ...(ds.properties || {}),
-      ...(ds.environmentVariables || ds.environmentVars || {}),
-      ...(detail.properties || {}),
-      ...(detail.application?.properties || {}),
-    };
+//     const ds = detail.target?.deploymentSettings || {};
+//     const appCfg = detail.application?.configuration || {};
+//     const propsSvc = appCfg['mule.agent.application.properties.service'] || {};
+//     const runtimeProps = {
+//       ...(propsSvc.properties || {}),
+//       ...(ds.properties || {}),
+//       ...(ds.environmentVariables || ds.environmentVars || {}),
+//       ...(detail.properties || {}),
+//       ...(detail.application?.properties || {}),
+//     };
 
-    const cpsMap = await fetchCpsProperties(detail, bgId);
+//     const cpsMap = await fetchCpsProperties(detail, bgId);
 
-    const schedUrl = app?.deploymentType === 'CloudHub 2.0'
-      ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}/schedulers`
-      : `/applications/cloudhub1/${envId}/${app.id}/schedules?orgId=${bgId}`;
+//     const schedUrl = app?.deploymentType === 'CloudHub 2.0'
+//       ? `/applications/cloudhub2/${bgId}/${envId}/${app.id}/schedulers`
+//       : `/applications/cloudhub1/${envId}/${app.id}/schedules?orgId=${bgId}`;
 
-    const schedRes = await api.get(schedUrl);
-    const data = schedRes?.data || [];
-    const rawItems = Array.isArray(data)
-      ? data
-      : (Array.isArray(data.schedulers) ? data.schedulers : Array.isArray(data.schedules) ? data.schedules : Array.isArray(data.items) ? data.items : []);
+//     const schedRes = await api.get(schedUrl);
+//     const data = schedRes?.data || [];
+//     const rawItems = Array.isArray(data)
+//       ? data
+//       : (Array.isArray(data.schedulers) ? data.schedulers : Array.isArray(data.schedules) ? data.schedules : Array.isArray(data.items) ? data.items : []);
 
-    return rawItems.map((scheduler, index) => {
-      const flowName = scheduler.flow || scheduler.flowName || scheduler.name || scheduler.schedulerName || `scheduler-${index}`;
-      const rawCron = scheduler.schedule?.cronExpression || scheduler.schedule?.expression || scheduler.expression || scheduler.cronExpression || '';
-      const startValue = scheduler.startTime || scheduler.startDate || scheduler.startedAt || scheduler.schedule?.startTime || scheduler.schedule?.startDate || '';
-      const nextRawValue = scheduler.nextRun || scheduler.nextExecution || scheduler.schedule?.nextRun || scheduler.schedule?.nextExecution || scheduler.nextRunTime || '';
-      const resolvedCron = resolveCronExpression(rawCron, runtimeProps, cpsMap);
+//     return rawItems.map((scheduler, index) => {
+//       const flowName = scheduler.flow || scheduler.flowName || scheduler.name || scheduler.schedulerName || `scheduler-${index}`;
+//       const rawCron = scheduler.schedule?.cronExpression || scheduler.schedule?.expression || scheduler.expression || scheduler.cronExpression || '';
+//       const startValue = scheduler.startTime || scheduler.startDate || scheduler.startedAt || scheduler.schedule?.startTime || scheduler.schedule?.startDate || '';
+//       const nextRawValue = scheduler.nextRun || scheduler.nextExecution || scheduler.schedule?.nextRun || scheduler.schedule?.nextExecution || scheduler.nextRunTime || '';
+//       const resolvedCron = resolveCronExpression(rawCron, runtimeProps, cpsMap);
 
-      let readableCron = '';
-      if (resolvedCron) {
-        try {
-          readableCron = cronstrue.toString(resolvedCron, { throwExceptionOnParseError: true });
-        } catch {
-          readableCron = '';
-        }
-      }
+//       let readableCron = '';
+//       if (resolvedCron) {
+//         try {
+//           readableCron = cronstrue.toString(resolvedCron, { throwExceptionOnParseError: true });
+//         } catch {
+//           readableCron = '';
+//         }
+//       }
 
-      const startTime = parseDateValue(startValue);
-      const nextExecution = parseDateValue(nextRawValue) || (resolvedCron ? getNextCronRun(resolvedCron) : null);
+//       const startTime = parseDateValue(startValue);
+//       const nextExecution = parseDateValue(nextRawValue) || (resolvedCron ? getNextCronRun(resolvedCron) : null);
 
-      return {
-        id: `${detail.name || app.name}-${flowName}-${index}`,
-        jobName: flowName,
-        appName: detail.name || app.name,
-        environment: detail.environment?.name || detail.environment?.environmentName || app.environment?.name || app.environment?.environmentName || '',
-        cron: resolvedCron,
-        decryptedCron: readableCron,
-        startTime,
-        nextExecution,
-      };
-    });
-  } catch (error) {
-    console.warn('[HelperPage] fetchSchedulerRecordsForApp failed:', error);
-    return [];
-  }
-}
+//       return {
+//         id: `${detail.name || app.name}-${flowName}-${index}`,
+//         jobName: flowName,
+//         appName: detail.name || app.name,
+//         environment: detail.environment?.name || detail.environment?.environmentName || app.environment?.name || app.environment?.environmentName || '',
+//         cron: resolvedCron,
+//         decryptedCron: readableCron,
+//         startTime,
+//         nextExecution,
+//       };
+//     });
+//   } catch (error) {
+//     console.warn('[HelperPage] fetchSchedulerRecordsForApp failed:', error);
+//     return [];
+//   }
+// }
 
-async function resolveJobsFromCsv(csvText, orgId, envKeys = [], envLabels = []) {
+async function resolveJobsFromCsv(
+  csvText,
+  orgId,
+  envKeys = [],
+  envLabels = []
+) {
   const names = extractJobNames(csvText)
-    .map((value) => value.trim())
+    .map((value) =>
+      value.trim()
+    )
     .filter(Boolean)
-    .map((value) => value.replace(/\s+/g, ' '));
+    .map((value) =>
+      value.replace(
+        /\s+/g,
+        ' '
+      )
+    );
 
-  const envScopeLabel = Array.isArray(envLabels) && envLabels.length
-    ? envLabels.join(', ')
-    : 'Selected env scope';
+  console.info(
+    '[HelperPage] CSV job names:',
+    names
+  );
 
-  console.info('[HelperPage] CSV job names:', names);
-  console.info('[HelperPage] Helper environment keys:', envKeys);
+  console.info(
+    '[HelperPage] Selected Helper environments:',
+    envKeys
+  );
 
-  if (!names.length) {
-    const parsed = parseCsvJobs(csvText);
-    console.info('[HelperPage] No job-name column found; parsed rows:', parsed.length);
-    return parsed.length ? parsed : [];
-  }
+  const selectedScopes =
+    (Array.isArray(envKeys)
+      ? envKeys
+      : []
+    )
+      .map((key) =>
+        String(key).trim()
+      )
+      .map((key) => {
+        const separator =
+          key.indexOf(':');
 
-  /*
-   * Helper environment keys come from the top-navbar environment scope
-   * and have the form:
-   *
-   *     BG_ID:ENV_ID
-   *
-   * Do NOT compare these directly with a plain ENV_ID.
-   */
-  const selectedScopes = (Array.isArray(envKeys) ? envKeys : [])
-    .map((key) => String(key).trim())
-    .map((key) => {
-      const separator = key.indexOf(':');
-      if (separator <= 0) return null;
+        if (separator <= 0) {
+          return null;
+        }
 
-      const bgId = key.slice(0, separator).trim();
-      const envId = key.slice(separator + 1).trim();
-      if (!bgId || !envId) return null;
+        const bgId =
+          key
+            .slice(
+              0,
+              separator
+            )
+            .trim();
 
-      return {
-        key,
-        bgId,
-        envId,
-      };
-    })
-    .filter(Boolean);
+        const envId =
+          key
+            .slice(
+              separator + 1
+            )
+            .trim();
+
+        if (!bgId || !envId) {
+          return null;
+        }
+
+        const env =
+          envOptions.find(
+            (item) =>
+              item.key === key
+          );
+
+        return {
+          bgId,
+          envId,
+          envName:
+            env?.name ||
+            '',
+        };
+      })
+      .filter(Boolean);
 
   if (!selectedScopes.length) {
-    console.warn('[HelperPage] No valid BG_ID:ENV_ID scopes were supplied.');
-    return names.map((name, index) => ({
-      id: `not-found-${index}`,
-      jobName: name,
-      appName: 'N/A',
-      environment: envScopeLabel,
-      cron: '',
-      decryptedCron: '',
-      startTime: null,
-      nextExecution: null,
-    }));
+    return names.map(
+      (name, index) => ({
+        id:
+          `not-found-${index}`,
+
+        jobName:
+          name,
+
+        appName:
+          'Not found',
+
+        environment:
+          envLabels.join(
+            ', '
+          ),
+
+        cron: '',
+        decryptedCron: '',
+        startTime: null,
+        nextExecution: null,
+      })
+    );
   }
 
-  console.info('[HelperPage] Parsed Helper scopes:', selectedScopes);
+  try {
+    const response =
+      await api.post(
+        '/helper/scheduler-details',
+        {
+          jobNames:
+            names,
 
-  const normalizeId = (value) => String(value ?? '').trim();
+          environments:
+            selectedScopes,
+        }
+      );
 
-  const fetchAppsForScope = async ({ bgId, envId }) => {
-    const apps = [];
+    const payload =
+      response?.data || {};
+
+    const backendRows =
+      Array.isArray(
+        payload.data
+      )
+        ? payload.data
+        : [];
+
+    console.info(
+      '[HelperPage] Backend Helper response:',
+      {
+        rows:
+          backendRows.length,
+
+        meta:
+          payload.meta,
+
+        failures:
+          payload.failures,
+      }
+    );
 
     /*
-     * Fetch CH2 and CH1 applications independently for the selected
-     * environment. One platform being unavailable must not prevent the
-     * other platform from being searched.
+     * Convert backend date strings back
+     * into Date objects because the existing
+     * table/export code expects Date objects.
      */
-    const [ch2Result, ch1Result] = await Promise.allSettled([
-      api.get(`/applications/cloudhub2/${bgId}/${envId}`, {
-        params: { limit: 500, offset: 0 },
-      }),
-      api.get(`/applications/cloudhub1/${envId}?orgId=${encodeURIComponent(bgId)}`),
-    ]);
+    return backendRows.map(
+      (row, index) => ({
+        ...row,
 
-    if (ch2Result.status === 'fulfilled') {
-      const data = ch2Result.value?.data;
-      const list = Array.isArray(data)
-        ? data
-        : data?.items || data?.deployments || data?.content || data?.data || [];
+        id:
+          row.id ||
+          `helper-${index}`,
 
-      if (Array.isArray(list)) {
-        for (const app of list) {
-          const appId = app?.id || app?.deploymentId;
-          if (!appId) continue;
+        startTime:
+          parseDateValue(
+            row.startTime
+          ),
 
-          apps.push({
-            ...app,
-            id: appId,
-            name: app?.name || app?.application?.name || appId,
-            deploymentType: 'CloudHub 2.0',
-            _bgId: bgId,
-            _envId: envId,
-            environment: {
-              ...(app?.environment || {}),
-              id: envId,
-            },
-          });
-        }
-      }
-    } else {
-      console.debug(
-        `[HelperPage] CH2 application lookup failed for BG ${bgId}, env ${envId}:`,
-        ch2Result.reason?.response?.status || ch2Result.reason?.message
-      );
-    }
+        nextExecution:
+          parseDateValue(
+            row.nextExecution
+          ),
+      })
+    );
+  } catch (error) {
+    console.error(
+      '[HelperPage] Backend Helper request failed:',
+      error
+    );
 
-    if (ch1Result.status === 'fulfilled') {
-      const data = ch1Result.value?.data;
-      const list = Array.isArray(data)
-        ? data
-        : data?.applications || data?.data || [];
-
-      if (Array.isArray(list)) {
-        for (const app of list) {
-          const appName = app?.domain || app?.name;
-          if (!appName) continue;
-
-          apps.push({
-            ...app,
-            id: appName,
-            name: appName,
-            deploymentType: 'CloudHub 1.0',
-            _bgId: bgId,
-            _envId: envId,
-            environment: {
-              ...(app?.environment || {}),
-              id: envId,
-            },
-          });
-        }
-      }
-    } else {
-      console.debug(
-        `[HelperPage] CH1 application lookup failed for BG ${bgId}, env ${envId}:`,
-        ch1Result.reason?.response?.status || ch1Result.reason?.message
-      );
-    }
-
-    return apps;
-  };
-
-  /*
-   * Avoid browser fan-out exploding when many environments are selected.
-   * Four environment lookups run at a time.
-   */
-  const environmentApps = [];
-  const environmentConcurrency = 4;
-  let nextScopeIndex = 0;
-
-  const scopeWorker = async () => {
-    while (nextScopeIndex < selectedScopes.length) {
-      const index = nextScopeIndex++;
-      const scope = selectedScopes[index];
-
-      try {
-        console.info(
-          `[HelperPage] Loading applications for ${scope.key} (${index + 1}/${selectedScopes.length})`
-        );
-
-        const apps = await fetchAppsForScope(scope);
-        environmentApps.push(...apps);
-
-        console.info(
-          `[HelperPage] ${scope.key}: ${apps.length} applications found.`
-        );
-      } catch (error) {
-        console.warn(
-          `[HelperPage] Application lookup failed for ${scope.key}:`,
-          error
-        );
-      }
-    }
-  };
-
-  await Promise.all(
-    Array.from(
-      { length: Math.min(environmentConcurrency, selectedScopes.length) },
-      () => scopeWorker()
-    )
-  );
-
-  /*
-   * Deduplicate applications in case an API returns the same application
-   * more than once.
-   */
-  const uniqueApps = [];
-  const seenApps = new Set();
-
-  for (const app of environmentApps) {
-    const key = `${app._bgId}:${app._envId}:${app.deploymentType}:${app.id}`;
-    if (seenApps.has(key)) continue;
-    seenApps.add(key);
-    uniqueApps.push(app);
+    throw error;
   }
-
-  console.info(
-    `[HelperPage] Total applications in selected environment scope: ${uniqueApps.length}`
-  );
-
-  if (!uniqueApps.length) {
-    return names.map((name, index) => ({
-      id: `not-found-${index}`,
-      jobName: name,
-      appName: 'N/A',
-      environment: envScopeLabel,
-      cron: '',
-      decryptedCron: '',
-      startTime: null,
-      nextExecution: null,
-    }));
-  }
-
-  const normalizedNames = names.map((name) => normalizeName(name));
-  const matched = [];
-
-  /*
-   * Scheduler calls are also bounded. This is still temporary frontend
-   * orchestration; the next step will move this whole operation to the
-   * backend Helper API.
-   */
-  const appConcurrency = 4;
-  let nextAppIndex = 0;
-
-  const appWorker = async () => {
-    while (nextAppIndex < uniqueApps.length) {
-      const index = nextAppIndex++;
-      const app = uniqueApps[index];
-
-      try {
-        const schedulers = await fetchSchedulerRecordsForApp(
-          app,
-          app._bgId || orgId
-        );
-
-        for (const scheduler of schedulers) {
-          const schedulerName = normalizeName(scheduler.jobName);
-
-          const isMatch = normalizedNames.some((name) => {
-            if (!name || !schedulerName) return false;
-            return (
-              schedulerName === name ||
-              schedulerName.includes(name) ||
-              name.includes(schedulerName)
-            );
-          });
-
-          if (isMatch) {
-            matched.push({
-              ...scheduler,
-              environment:
-                scheduler.environment ||
-                app.environment?.name ||
-                app.environment?.environmentName ||
-                envScopeLabel,
-            });
-          }
-        }
-      } catch (error) {
-        console.warn(
-          `[HelperPage] Scheduler lookup failed for ${app.name || app.id}:`,
-          error
-        );
-      }
-    }
-  };
-
-  await Promise.all(
-    Array.from(
-      { length: Math.min(appConcurrency, uniqueApps.length) },
-      () => appWorker()
-    )
-  );
-
-  console.info(
-    `[HelperPage] Scheduler matching complete. Matches: ${matched.length}`
-  );
-
-  if (matched.length) return matched;
-
-  /*
-   * Keep the requested CSV jobs visible when no live scheduler matched.
-   * These are explicitly marked as not found rather than pretending they
-   * came from Anypoint.
-   */
-  return names.map((name, index) => ({
-    id: `not-found-${index}`,
-    jobName: name,
-    appName: 'Not found',
-    environment: envScopeLabel,
-    cron: '',
-    decryptedCron: '',
-    startTime: null,
-    nextExecution: null,
-  }));
 }
 
 export default function HelperPage() {
@@ -1097,36 +972,82 @@ export default function HelperPage() {
     reader.readAsText(file);
   };
 
-  const handleGetDetails = async () => {
-    if (!csvText.trim()) {
-      setError('Upload a CSV file before fetching job details.');
-      return;
+const handleGetDetails = async () => {
+  if (!csvText.trim()) {
+    setError(
+      'Upload a CSV file before fetching job details.'
+    );
+    return;
+  }
+
+  if (
+    selectedEnvIds.length === 0
+  ) {
+    setRows([]);
+    setError(
+      'Please select at least one environment from the Helper dropdown.'
+    );
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+  setRows([]);
+
+  try {
+    console.info(
+      '[HelperPage] Starting backend Helper search',
+      {
+        environments:
+          selectedEnvIds,
+        environmentNames:
+          selectedEnvNames,
+      }
+    );
+
+    const result =
+      await resolveJobsFromCsv(
+        csvText,
+        orgId,
+        selectedEnvIds,
+        selectedEnvNames
+      );
+
+    console.info(
+      '[HelperPage] Backend Helper returned:',
+      result.length,
+      'rows'
+    );
+
+    setRows(result);
+
+    if (!result.length) {
+      setError(
+        'No scheduler details were found in the selected environment scope.'
+      );
     }
+  } catch (error) {
+    console.error(
+      '[HelperPage] Job resolution failed:',
+      error
+    );
 
-    if (selectedEnvIds.length === 0) {
-      setRows([]);
-      setError('Please select at least one environment from the Helper dropdown.');
-      return;
-    }
+    setRows([]);
 
-    setLoading(true);
-    setError('');
+    const backendMessage =
+      error?.response?.data
+        ?.message ||
+      error?.response?.data
+        ?.error;
 
-    try {
-      console.info('[HelperPage] Starting job resolution for selected environments:', selectedEnvIds);
-      const parsed = await resolveJobsFromCsv(csvText, orgId, selectedEnvIds, selectedEnvNames);
-      console.info('[HelperPage] Job resolution finished with result count:', parsed.length);
-      setRows(parsed);
-      setError(parsed.length ? '' : 'No matching job schedules were found in the selected environment scope.');
-    } catch (error) {
-      console.error('[HelperPage] Job resolution failed:', error);
-      setRows([]);
-      setError('The uploaded file could not be parsed or no job details could be resolved for the selected environment.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    setError(
+      backendMessage ||
+      'The scheduler details could not be resolved.'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   const handleExport = () => {
     if (!jobs.length) return;
 

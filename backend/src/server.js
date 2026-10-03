@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
+const helperRoutes = require('./routes/helper');
 
 // ── Session secret validation ─────────────────────────────────────────────────
 // Fail fast in production if SESSION_SECRET is not set or is the known default.
@@ -104,6 +105,7 @@ app.use('/api/metrics', metricsRoutes);
 // CPS routes receive a higher body-size limit — property payloads can be large
 app.use('/api/cps', express.json({ limit: '50mb' }));
 app.use('/api/cps', cpsRoutes);
+app.use('/api/helper', helperRoutes);
 app.use('/api/health', healthRoutes);
 
 // Server health check

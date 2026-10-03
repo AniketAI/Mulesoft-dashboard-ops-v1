@@ -1319,4 +1319,15 @@ router.detectChType = detectChType;
 router.getCredentials = getCredentials;
 router.normaliseUrl = normaliseUrl;
 
+// Export selected internal helpers for backend routes that need to
+// perform CPS operations without making an HTTP request back into
+// this Express server.
+router._cpsHelpers = {
+  normaliseUrl,
+  getCredentials,
+  detectEnvType,
+  detectChType,
+  httpsAgent,
+};
+
 module.exports = router;
