@@ -6,17 +6,23 @@ import { getVisibleBgIds, getVisibleEnvIds } from '../utils/filterUtils';
 import { useAuth } from '../context/AuthContext';
 import { downloadCsv } from '../utils/appUtils';
 
-const normalizeHeader = (value = '') => String(value).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+const normalizeHeader = (value = '') =>
+  String(value)
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 const normalizeName = (value = '') => String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 const normalizeCell = (value) => String(value ?? '').trim();
 
-function parseCsvLine(line) {
+function parseCsvLine(line, delimiter = ',') {
   const values = [];
   let current = '';
   let inQuotes = false;
 
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i];
+
     if (ch === '"') {
       if (inQuotes && line[i + 1] === '"') {
         current += '"';
@@ -24,7 +30,7 @@ function parseCsvLine(line) {
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (ch === ',' && !inQuotes) {
+    } else if (ch === delimiter && !inQuotes) {
       values.push(current);
       current = '';
     } else {
@@ -33,7 +39,42 @@ function parseCsvLine(line) {
   }
 
   values.push(current);
-  return values.map((v) => v.replace(/^"|"$/g, '').trim());
+
+  return values.map((value) =>
+    String(value)
+      .replace(/^\uFEFF/, '')
+      .replace(/^"|"$/g, '')
+      .trim()
+  );
+}
+
+function detectCsvDelimiter(line = '') {
+  const candidates = [',', ';', '\t', '|'];
+
+  let bestDelimiter = ',';
+  let bestCount = 0;
+
+  for (const delimiter of candidates) {
+    let count = 0;
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === delimiter && !inQuotes) {
+        count += 1;
+      }
+    }
+
+    if (count > bestCount) {
+      bestCount = count;
+      bestDelimiter = delimiter;
+    }
+  }
+
+  return bestDelimiter;
 }
 
 function parseDateValue(value) {
@@ -304,48 +345,131 @@ function extractJobNames(csvText) {
 }
 
 function extractApplicationNames(csvText) {
-  if (!csvText || !csvText.trim()) return [];
+  if (!csvText || !csvText.trim()) {
+    console.warn('[HelperPage] CSV text is empty.');
+    return [];
+  }
 
   const lines = csvText
+    .replace(/^\uFEFF/, '')
     .split(/\r?\n/)
-    .filter((line) => line.trim().length > 0);
+    .map((line) => line.trim())
+    .filter(Boolean);
 
-  if (lines.length < 2) return [];
+  if (lines.length === 0) {
+    console.warn('[HelperPage] CSV contains no rows.');
+    return [];
+  }
 
-  const rows = lines.map(parseCsvLine);
-  const headers = rows[0].map((header) => normalizeHeader(header));
+  const delimiter = detectCsvDelimiter(lines[0]);
+
+  const rows = lines.map((line) =>
+    parseCsvLine(line, delimiter)
+  );
+
+  const rawHeaders = rows[0] || [];
+
+  const headers = rawHeaders.map((header) =>
+    normalizeHeader(header)
+  );
+
+  console.info('[HelperPage] CSV detected:', {
+    delimiter:
+      delimiter === '\t'
+        ? 'TAB'
+        : delimiter,
+    rawHeaders,
+    normalizedHeaders: headers,
+    columnCount: headers.length,
+    rowCount: rows.length - 1,
+  });
 
   const applicationAliases = [
     'application',
+    'applicationname',
     'appname',
     'app',
-    'applicationname',
+    'appname',
     'integration',
+    'integrationname',
     'project',
+    'projectname',
     'jobapplication',
+    'applicationid',
     'source',
   ];
 
-  const applicationIndex = headers.findIndex((header) =>
-    applicationAliases.includes(header)
-  );
+  let applicationIndex = -1;
+
+  for (const alias of applicationAliases) {
+    const normalizedAlias = normalizeHeader(alias);
+
+    applicationIndex = headers.findIndex(
+      (header) =>
+        header === normalizedAlias ||
+        header.includes(normalizedAlias) ||
+        normalizedAlias.includes(header)
+    );
+
+    if (applicationIndex >= 0) {
+      break;
+    }
+  }
+
+  /*
+   * Some CSV files may contain headers such as:
+   *
+   * "Application Name"
+   * "Application_Name"
+   * "ApplicationName"
+   *
+   * normalizeHeader() converts all of these to:
+   *
+   * applicationname
+   */
 
   if (applicationIndex < 0) {
     console.warn(
-      '[HelperPage] CSV does not contain an application-name column.'
+      '[HelperPage] Could not find an application column in CSV.',
+      {
+        rawHeaders,
+        normalizedHeaders: headers,
+        expectedAliases: applicationAliases,
+      }
     );
 
     return [];
   }
 
-  return [
+  const applicationNames = [
     ...new Set(
       rows
         .slice(1)
-        .map((row) => normalizeCell(row[applicationIndex]))
+        .map((row) => {
+          const value = row[applicationIndex];
+
+          return normalizeCell(value)
+            .replace(/^\uFEFF/, '')
+            .trim();
+        })
         .filter(Boolean)
     ),
   ];
+
+  console.info(
+    '[HelperPage] Extracted CSV application names:',
+    {
+      applicationColumn:
+        rawHeaders[applicationIndex],
+      applicationColumnIndex:
+        applicationIndex,
+      applicationCount:
+        applicationNames.length,
+      applicationNames,
+    }
+  );
+
+  return applicationNames;
 }
 
 
@@ -1191,15 +1315,15 @@ export default function HelperPage() {
   };
 
   const selectedEnvNames = envOptions
-  .filter(
-    (env) =>
-      selectedEnvIds.includes(
-        env.key
-      )
-  )
-  .map(
-    (env) => env.name
-  );
+    .filter(
+      (env) =>
+        selectedEnvIds.includes(
+          env.key
+        )
+    )
+    .map(
+      (env) => env.name
+    );
 
   const selectedEnvSummary = selectedEnvNames.length === 0
     ? 'Select environment'
@@ -1217,6 +1341,7 @@ export default function HelperPage() {
       setError(
         'Please select at least one environment from the Helper dropdown before uploading the CSV.'
       );
+
       event.target.value = '';
       return;
     }
@@ -1232,9 +1357,7 @@ export default function HelperPage() {
       setCsvText(nextCsvText);
 
       /*
-      * IMPORTANT:
-      *
-      * CSV is only a FRONTEND FILTER.
+      * CSV IS ONLY A FRONTEND FILTER.
       *
       * Do NOT call the backend here.
       * Do NOT rediscover applications.
@@ -1242,12 +1365,18 @@ export default function HelperPage() {
       * Do NOT fetch CPS.
       */
 
-      const applicationNames = extractApplicationNames(nextCsvText);
+      const applicationNames =
+        extractApplicationNames(nextCsvText);
 
       if (applicationNames.length === 0) {
         setError(
           'No application names were found in the uploaded CSV.'
         );
+
+        console.warn(
+          '[HelperPage] CSV filtering stopped because no application names were extracted.'
+        );
+
         return;
       }
 
@@ -1260,18 +1389,44 @@ export default function HelperPage() {
       setRows((currentRows) => {
         const filteredRows = currentRows.filter((job) => {
           const appName = normalizeName(
-            job?.appName || job?.application
+            job?.appName ||
+            job?.application ||
+            ''
           );
 
-          return normalizedApplicationNames.has(appName);
+          return normalizedApplicationNames.has(
+            appName
+          );
         });
 
         console.info(
           '[HelperPage] CSV frontend filter applied:',
           {
-            csvApplications: applicationNames.length,
-            jobsBeforeFilter: currentRows.length,
-            jobsAfterFilter: filteredRows.length,
+            csvApplications:
+              applicationNames.length,
+
+            jobsBeforeFilter:
+              currentRows.length,
+
+            jobsAfterFilter:
+              filteredRows.length,
+
+            csvApplicationNames:
+              applicationNames,
+
+            discoveredApplicationNames:
+              [
+                ...new Set(
+                  currentRows
+                    .map(
+                      (job) =>
+                        job?.appName ||
+                        job?.application ||
+                        ''
+                    )
+                    .filter(Boolean)
+                ),
+              ],
           }
         );
 
