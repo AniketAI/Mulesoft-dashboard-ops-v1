@@ -1214,22 +1214,73 @@ export default function HelperPage() {
     if (!file) return;
 
     if (selectedEnvIds.length === 0) {
-      setRows([]);
-      setError('Please select at least one environment from the Helper dropdown before uploading the CSV.');
+      setError(
+        'Please select at least one environment from the Helper dropdown before uploading the CSV.'
+      );
       event.target.value = '';
       return;
     }
 
     setFileName(file.name);
     setError('');
-    setRows([]);
 
     const reader = new FileReader();
+
     reader.onload = () => {
       const nextCsvText = String(reader.result || '');
+
       setCsvText(nextCsvText);
+
+      /*
+      * IMPORTANT:
+      *
+      * CSV is only a FRONTEND FILTER.
+      *
+      * Do NOT call the backend here.
+      * Do NOT rediscover applications.
+      * Do NOT fetch schedulers.
+      * Do NOT fetch CPS.
+      */
+
+      const applicationNames = extractApplicationNames(nextCsvText);
+
+      if (applicationNames.length === 0) {
+        setError(
+          'No application names were found in the uploaded CSV.'
+        );
+        return;
+      }
+
+      const normalizedApplicationNames = new Set(
+        applicationNames
+          .map((name) => normalizeName(name))
+          .filter(Boolean)
+      );
+
+      setRows((currentRows) => {
+        const filteredRows = currentRows.filter((job) => {
+          const appName = normalizeName(
+            job?.appName || job?.application
+          );
+
+          return normalizedApplicationNames.has(appName);
+        });
+
+        console.info(
+          '[HelperPage] CSV frontend filter applied:',
+          {
+            csvApplications: applicationNames.length,
+            jobsBeforeFilter: currentRows.length,
+            jobsAfterFilter: filteredRows.length,
+          }
+        );
+
+        return filteredRows;
+      });
+
       event.target.value = '';
     };
+
     reader.readAsText(file);
   };
 
