@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Server,
   ShieldCheck,
@@ -10,7 +10,9 @@ import {
   Database,
   Globe,
   Wrench,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  BriefcaseBusiness
 } from 'lucide-react';
 
 const navItems = [
@@ -22,8 +24,73 @@ const navItems = [
   { to: '/cps-manager', icon: Database, label: 'CPS Manager' },
   { to: '/global-cps-manager', icon: Globe, label: 'Global CPS Manager' },
   { to: '/user-search', icon: Users, label: 'Global Search' },
-  { to: '/helper', icon: Wrench, label: 'Helper' },
 ];
+
+
+function HelperNavSection({ open, location }) {
+  const navigate = useNavigate();
+  const [helperOpen, setHelperOpen] = useState(() => location.pathname.startsWith('/helper'));
+  const helperActive = location.pathname.startsWith('/helper');
+
+  return (
+    <div className="space-y-0.5">
+      <button
+        type="button"
+        title={!open ? 'Helper' : undefined}
+        onClick={() => {
+          if (!open) {
+            navigate('/helper/job-helper');
+            return;
+          }
+          setHelperOpen((value) => !value);
+        }}
+        className={`group relative w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium ${
+          helperActive
+            ? 'bg-gradient-to-r from-sf-500/10 via-sf-500/5 to-transparent dark:from-sf-500/15 dark:via-sf-500/5 text-sf-700 dark:text-sf-300'
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-white/[0.04]'
+        }`}
+      >
+        {helperActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-sf-600 shadow-[0_0_10px_rgba(1,118,211,0.7)]" />
+        )}
+        <span
+          className={`relative flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 transition-all duration-200 ${
+            helperActive
+              ? 'bg-sf-600 text-white shadow-md shadow-sf-500/40'
+              : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-200 group-hover:bg-white dark:group-hover:bg-gray-800 group-hover:shadow-sm group-hover:scale-105'
+          }`}
+        >
+          {helperActive && <span className="absolute inset-0 rounded-lg bg-sf-500 blur-md opacity-50 -z-10" />}
+          <Wrench size={16} />
+        </span>
+        {open && (
+          <>
+            <span className="truncate flex-1 text-left">Helper</span>
+            {helperOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </>
+        )}
+      </button>
+
+      {open && helperOpen && (
+        <div className="ml-5 pl-3 border-l border-gray-200 dark:border-gray-800 space-y-0.5">
+          <NavLink
+            to="/helper/job-helper"
+            className={({ isActive }) =>
+              `group flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                isActive
+                  ? 'bg-sf-500/10 text-sf-700 dark:bg-sf-500/15 dark:text-sf-300'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-gray-100'
+              }`
+            }
+          >
+            <BriefcaseBusiness size={14} />
+            <span>Job Helper</span>
+          </NavLink>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Sidebar({ open }) {
   const location = useLocation();
@@ -61,8 +128,6 @@ export default function Sidebar({ open }) {
           </p>
         )}
         {navItems.map(({ to, icon: Icon, label }) => {
-          // Use prefix matching so sub-routes (e.g. /applications/:org/:env/:id)
-          // keep the parent nav item highlighted (Feature 1.6).
           const isActive = location.pathname === to || location.pathname.startsWith(to + '/');
           return (
             <NavLink
@@ -94,6 +159,8 @@ export default function Sidebar({ open }) {
             </NavLink>
           );
         })}
+
+        <HelperNavSection open={open} location={location} />
       </nav>
 
       {/* Footer */}

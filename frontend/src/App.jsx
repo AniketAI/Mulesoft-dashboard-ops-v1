@@ -60,7 +60,8 @@ export default function App() {
             <Route path="user-search" element={<GlobalSearchPage />} />
             <Route path="cps-manager" element={<CpsManagerPage />} />
             <Route path="global-cps-manager" element={<GlobalCpsManagerPage />} />
-            <Route path="helper" element={<HelperPage />} />
+            <Route path="helper" element={<Navigate to="/helper/job-helper" replace />} />
+            <Route path="helper/job-helper" element={<HelperPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
