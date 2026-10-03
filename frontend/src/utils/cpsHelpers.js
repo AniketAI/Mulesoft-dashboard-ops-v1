@@ -130,18 +130,23 @@ export function flattenCpsResponse(data, appKey) {
  * @returns {string|null}
  */
 export function findApiIdInProps(props) {
+  const safeProps = props || {};
+  const entries = Object.entries(safeProps).map(([k, v]) => [String(k).toLowerCase(), v]);
   const isValidId = v => /^\d+$/.test(String(v).trim()) && String(v).trim() !== '0';
 
-  if ('api.id' in props && isValidId(props['api.id'])) {
-    return String(props['api.id']).trim();
+  const exactApiId = safeProps['api.id'] ?? safeProps['API.ID'] ?? safeProps['Api.Id'];
+  if (exactApiId !== undefined && isValidId(exactApiId)) {
+    return String(exactApiId).trim();
   }
-  const dotApiId = Object.entries(props).find(([k]) => k.endsWith('.api.id'));
+
+  const dotApiId = entries.find(([k]) => k.endsWith('.api.id'));
   if (dotApiId && isValidId(dotApiId[1])) return String(dotApiId[1]).trim();
 
-  const dotId = Object.entries(props).find(([k, v]) => k.endsWith('.id') && isValidId(v));
+  const dotId = entries.find(([k, v]) => k.endsWith('.id') && isValidId(v));
   if (dotId) return String(dotId[1]).trim();
 
-  if ('id' in props && isValidId(props['id'])) return String(props['id']).trim();
+  const bareId = safeProps.id ?? safeProps.ID;
+  if (bareId !== undefined && isValidId(bareId)) return String(bareId).trim();
 
   return null;
 }
@@ -161,16 +166,18 @@ export function findApiIdInProps(props) {
  */
 export function findOAuth2Url(props) {
   for (const [k, v] of Object.entries(props || {})) {
-    const val = String(v || '');
-    if (!val.startsWith('http')) continue;
+    const val = String(v ?? '');
+    const lowerVal = val.toLowerCase();
+    const lowerKey = String(k).toLowerCase();
+    if (!/^https?:\/\//i.test(val)) continue;
     if (
-      val.includes('/oauth2/') ||
-      val.includes('okta.com') ||
-      (val.includes('/token') && (
-        k.toLowerCase().includes('jwt') ||
-        k.toLowerCase().includes('oauth') ||
-        k.toLowerCase().includes('token') ||
-        k.toLowerCase().includes('auth')
+      lowerVal.includes('/oauth2/') ||
+      lowerVal.includes('okta.com') ||
+      (lowerVal.includes('/token') && (
+        lowerKey.includes('jwt') ||
+        lowerKey.includes('oauth') ||
+        lowerKey.includes('token') ||
+        lowerKey.includes('auth')
       ))
     ) {
       return val;

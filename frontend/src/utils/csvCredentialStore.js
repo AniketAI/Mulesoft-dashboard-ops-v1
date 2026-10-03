@@ -23,7 +23,12 @@ export function parseCsvLine(line) {
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      inQuotes = !inQuotes;
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
     } else if ((ch === ',' || ch === ';') && !inQuotes) {
       result.push(current.trim());
       current = '';

@@ -24,7 +24,14 @@ export function parseGlobalCpsCsv(text) {
     ch2_uat_client_secret: headers.findIndex(h => h.includes('ch2') && h.includes('uat') && h.includes('secret')),
     ch2_prod_client_id: headers.findIndex(h => h.includes('ch2') && h.includes('prod') && h.includes('id')),
     ch2_prod_client_secret: headers.findIndex(h => h.includes('ch2') && h.includes('prod') && h.includes('secret')),
-    business_group: headers.findIndex(h => h.includes('business') && h.includes('group') || h.includes('bg') || h.includes('bussiness')),
+    business_group: headers.findIndex(h => {
+      const normalized = h.toLowerCase();
+      return (
+        (normalized.includes('business') && normalized.includes('group')) ||
+        normalized.includes('bussiness') ||
+        normalized.includes('bg')
+      );
+    }),
   };
 
   const results = [];
