@@ -540,10 +540,35 @@ export default function HelperPage() {
   const [selectedEnvIds, setSelectedEnvIds] = useState([]);
   const [envLoading, setEnvLoading] = useState(false);
   const [envMenuOpen, setEnvMenuOpen] = useState(false);
+  const [envSearch, setEnvSearch] = useState('');
   const fileInputRef = useRef(null);
   const envMenuRef = useRef(null);
 
   const jobs = useMemo(() => rows, [rows]);
+
+  const groupedEnvOptions = useMemo(() => {
+    const groups = new Map();
+    const query = envSearch.trim().toLowerCase();
+
+    const visible = query
+      ? envOptions.filter((env) => {
+          return env.name.toLowerCase().includes(query) || env.bgName.toLowerCase().includes(query) || String(env.type).toLowerCase().includes(query);
+        })
+      : envOptions;
+
+    for (const env of visible) {
+      const bgName = env.bgName || 'Business Group';
+      if (!groups.has(bgName)) {
+        groups.set(bgName, []);
+      }
+      groups.get(bgName).push(env);
+    }
+
+    return [...groups.entries()].map(([bgName, envs]) => ({ bgName, envs }));
+  }, [envOptions, envSearch]);
+
+  const productionCount = envOptions.filter((env) => String(env.type).toLowerCase() === 'production').length;
+  const sandboxCount = envOptions.filter((env) => String(env.type).toLowerCase() !== 'production').length;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -748,7 +773,7 @@ export default function HelperPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Select the environments to scan before fetching job details.</p>
           </div>
 
-          <div ref={envMenuRef} className="relative w-full max-w-md">
+          <div ref={envMenuRef} className="relative w-full max-w-lg">
             <button
               type="button"
               onClick={() => setEnvMenuOpen((prev) => !prev)}
@@ -762,39 +787,93 @@ export default function HelperPage() {
             </button>
 
             {envMenuOpen && (
-              <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900">
-                <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                  <button type="button" onClick={handleSelectAllEnvs} className="rounded-lg border border-sf-200 bg-sf-50 px-2 py-1 text-[11px] font-medium text-sf-700 dark:border-sf-500/30 dark:bg-sf-500/10 dark:text-sf-200">
-                    All
-                  </button>
-                  <button type="button" onClick={handleClearEnvSelection} className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    Clear
-                  </button>
+              <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
+                <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/70">
+                  <Search size={12} className="text-gray-400" />
+                  <input
+                    value={envSearch}
+                    onChange={(event) => setEnvSearch(event.target.value)}
+                    placeholder="Search BG or environment…"
+                    className="w-full bg-transparent text-xs text-gray-700 placeholder:text-gray-400 focus:outline-none dark:text-gray-200"
+                  />
+                  {envSearch && (
+                    <button type="button" onClick={() => setEnvSearch('')} className="text-[10px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">Clear</button>
+                  )}
                 </div>
 
-                <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
+                <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+                  {productionCount > 0 && (
+                    <button type="button" onClick={() => setSelectedEnvIds(envOptions.filter((env) => String(env.type).toLowerCase() === 'production').map((env) => env.id))} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      Production ({productionCount})
+                    </button>
+                  )}
+                  {sandboxCount > 0 && (
+                    <button type="button" onClick={() => setSelectedEnvIds(envOptions.filter((env) => String(env.type).toLowerCase() !== 'production').map((env) => env.id))} className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                      Sandbox ({sandboxCount})
+                    </button>
+                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400">{selectedEnvIds.length}/{envOptions.length} selected</span>
+                    <button type="button" onClick={handleSelectAllEnvs} className="text-[10px] font-medium text-sf-600 hover:text-sf-700 dark:text-sf-300">All</button>
+                    {selectedEnvIds.length > 0 && (
+                      <button type="button" onClick={handleClearEnvSelection} className="text-[10px] font-medium text-red-500 hover:text-red-600">Clear</button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="max-h-72 overflow-y-auto">
                   {envLoading ? (
-                    <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">Loading environments…</div>
-                  ) : envOptions.length === 0 ? (
-                    <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">No environments were found for the current org.</div>
+                    <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">Loading environments…</div>
+                  ) : groupedEnvOptions.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{envSearch ? `No environments match "${envSearch}"` : 'No environments available'}</div>
                   ) : (
-                    envOptions.map((env) => {
-                      const active = selectedEnvIds.includes(env.id);
+                    groupedEnvOptions.map(({ bgName, envs }) => {
+                      const bgSelectedCount = envs.filter((env) => selectedEnvIds.includes(env.id)).length;
+                      const allBgSelected = bgSelectedCount === envs.length;
+                      const someBgSelected = bgSelectedCount > 0 && bgSelectedCount < envs.length;
+
                       return (
-                        <button
-                          key={env.id}
-                          type="button"
-                          onClick={() => handleEnvToggle(env.id)}
-                          className={`flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left transition ${
-                            active ? 'bg-sf-50 text-sf-700 dark:bg-sf-500/10 dark:text-sf-200' : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800/80'
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium">{env.name}</div>
-                            <div className="truncate text-[11px] text-gray-500 dark:text-gray-400">{env.bgName}</div>
+                        <div key={bgName} className="border-b border-gray-200 last:border-b-0 dark:border-gray-700">
+                          <div
+                            onClick={() => {
+                              const ids = envs.map((env) => env.id);
+                              setSelectedEnvIds((prev) => {
+                                const next = new Set(prev);
+                                if (ids.every((id) => next.has(id))) ids.forEach((id) => next.delete(id));
+                                else ids.forEach((id) => next.add(id));
+                                return [...next];
+                              });
+                            }}
+                            className="flex cursor-pointer items-center gap-2 bg-gray-50 px-3 py-2 text-left dark:bg-gray-800/60"
+                          >
+                            <span className={`flex h-3.5 w-3.5 items-center justify-center rounded border ${allBgSelected ? 'border-sf-500 bg-sf-500 text-white' : someBgSelected ? 'border-sf-300 bg-sf-100 text-sf-600' : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'}`}>
+                              {allBgSelected ? <Check size={8} /> : someBgSelected ? <span className="text-[8px] font-bold">–</span> : null}
+                            </span>
+                            <span className="flex-1 truncate text-[11px] font-semibold text-gray-600 dark:text-gray-300">{bgName}</span>
+                            <span className="text-[9px] text-gray-500 dark:text-gray-400">{envs.length}</span>
                           </div>
-                          {active ? <Check size={14} className="text-sf-600 dark:text-sf-400" /> : <span className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600" />}
-                        </button>
+
+                          {envs.map((env) => {
+                            const active = selectedEnvIds.includes(env.id);
+                            return (
+                              <button
+                                key={env.id}
+                                type="button"
+                                onClick={() => handleEnvToggle(env.id)}
+                                className={`flex w-full items-center gap-3 border-b border-gray-100 px-3 py-2 text-left transition last:border-b-0 dark:border-gray-700 ${active ? 'bg-sf-50 dark:bg-sf-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/70'}`}
+                              >
+                                <span className={`flex h-4 w-4 items-center justify-center rounded border ${active ? 'border-sf-500 bg-sf-500 text-white' : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'}`}>
+                                  {active && <Check size={9} />}
+                                </span>
+                                <span className={`h-2 w-2 rounded-full ${String(env.type).toLowerCase() === 'production' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                                <span className="flex-1 truncate text-xs text-gray-700 dark:text-gray-200">{env.name}</span>
+                                <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${String(env.type).toLowerCase() === 'production' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}`}>
+                                  {String(env.type).toLowerCase() === 'production' ? 'prod' : 'sandbox'}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       );
                     })
                   )}
