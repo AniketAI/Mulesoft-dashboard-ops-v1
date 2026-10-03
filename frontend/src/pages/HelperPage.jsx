@@ -302,6 +302,19 @@ function extractJobNames(csvText) {
   return rows.slice(1).map((row) => normalizeCell(row[0])).filter(Boolean);
 }
 
+function getGlobalSelectedEnvKeys() {
+  try {
+    const raw = sessionStorage.getItem('userSearch_selections');
+    if (!raw) return [];
+    const value = JSON.parse(raw);
+    if (!Array.isArray(value)) return [];
+    return value.filter(Boolean);
+  } catch (error) {
+    console.warn('[HelperPage] Failed to read persisted global env selection:', error);
+    return [];
+  }
+}
+
 async function fetchCpsProperties(app, orgId) {
   try {
     const ds = app?.target?.deploymentSettings || {};
@@ -588,6 +601,9 @@ export default function HelperPage() {
     const loadEnvironmentOptions = async () => {
       setEnvLoading(true);
       try {
+        console.info('[HelperPage] Loading globally selected envs for helper lookup');
+        const globalSelectionKeys = new Set(getGlobalSelectedEnvKeys());
+
         const groupRes = await api.get('/organizations/business-groups');
         const groups = groupRes?.data?.data || groupRes?.data?.businessGroups || groupRes?.data || [];
         const envs = [];
@@ -601,10 +617,14 @@ export default function HelperPage() {
             list.forEach((env) => {
               const id = env.id || env.environmentId || env.envId;
               if (!id || envs.some((item) => item.id === id)) return;
+              const bgKey = `${groupId}:${id}`;
+              const visible = globalSelectionKeys.size === 0 || globalSelectionKeys.has(bgKey);
+              if (!visible) return;
               envs.push({
                 id,
                 name: env.name || env.environmentName || 'Unnamed environment',
                 type: env.type || env.environmentType || 'unknown',
+                bgId: groupId,
                 bgName: group.name || group.organizationName || 'Business Group',
               });
             });
@@ -615,11 +635,17 @@ export default function HelperPage() {
 
         if (!isMounted) return;
         setEnvOptions(envs);
-        setSelectedEnvIds((prev) => {
-          const validPrev = prev.filter((id) => envs.some((env) => env.id === id));
-          if (validPrev.length > 0) return validPrev;
-          return envs.map((env) => env.id);
-        });
+
+        if (globalSelectionKeys.size > 0) {
+          const selectedFromGlobal = envs.map((env) => env.id);
+          setSelectedEnvIds(selectedFromGlobal);
+        } else {
+          setSelectedEnvIds([]);
+        }
+
+        if (envs.length === 0) {
+          console.warn('[HelperPage] No global envs selected for helper lookup; user must pick envs in Global Search first.');
+        }
       } catch (error) {
         console.warn('[HelperPage] Failed to load environment list:', error);
       } finally {
@@ -692,7 +718,7 @@ export default function HelperPage() {
 
     if (selectedEnvIds.length === 0) {
       setRows([]);
-      setError('Please select at least one environment before fetching job details.');
+      setError('No global environments are selected. Please choose the environments in Global Search first.');
       return;
     }
 
@@ -700,10 +726,13 @@ export default function HelperPage() {
     setError('');
 
     try {
+      console.info('[HelperPage] Starting job resolution for selected environments:', selectedEnvIds);
       const parsed = await resolveJobsFromCsv(csvText, orgId, selectedEnvIds, selectedEnvNames);
+      console.info('[HelperPage] Job resolution finished with result count:', parsed.length);
       setRows(parsed);
       setError(parsed.length ? '' : 'No matching job schedules were found in the selected environment scope.');
-    } catch {
+    } catch (error) {
+      console.error('[HelperPage] Job resolution failed:', error);
       setRows([]);
       setError('The uploaded file could not be parsed or no job details could be resolved for the selected environment.');
     } finally {

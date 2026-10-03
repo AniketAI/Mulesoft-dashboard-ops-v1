@@ -57,12 +57,15 @@ router.get('/cloudhub2/:orgId/:envId', authMiddleware, async (req, res) => {
   try {
     const client = createClient(req.anypointToken);
     const { limit = 50, offset = 0 } = req.query;
+    console.info(`[Applications] Fetching CH2 applications org=${req.params.orgId} env=${req.params.envId} limit=${limit} offset=${offset}`);
     const response = await client.get(
       `/amc/application-manager/api/v2/organizations/${req.params.orgId}/environments/${req.params.envId}/deployments`,
       { params: { limit, offset } }
     );
+    console.info(`[Applications] CH2 applications response org=${req.params.orgId} env=${req.params.envId} count=${Array.isArray(response.data?.items || response.data?.deployments || response.data) ? (response.data.items || response.data.deployments || response.data).length : 'unknown'}`);
     res.json(response.data);
   } catch (error) {
+    console.error('[Applications] Failed to fetch CH2 applications', { orgId: req.params.orgId, envId: req.params.envId, message: error.message, stack: error.stack });
     sendProxyError(res, error, 'Failed to fetch CloudHub 2.0 applications');
   }
 });
@@ -104,11 +107,15 @@ router.get('/cloudhub2/:orgId/:envId/:deploymentId/schedulers', authMiddleware, 
   try {
     const client = createClient(req.anypointToken);
     const { orgId, envId, deploymentId } = req.params;
+    console.info(`[Applications] Fetching CH2 schedulers org=${orgId} env=${envId} deployment=${deploymentId}`);
     const response = await client.get(
       `/amc/application-manager/api/v2/organizations/${orgId}/environments/${envId}/deployments/${deploymentId}/schedulers`
     );
+    const items = Array.isArray(response.data) ? response.data : response.data?.schedulers || response.data?.items || [];
+    console.info(`[Applications] CH2 schedulers loaded org=${orgId} env=${envId} deployment=${deploymentId} count=${items.length}`);
     res.json(response.data);
   } catch (error) {
+    console.error('[Applications] Failed to fetch CH2 schedulers', { orgId: req.params.orgId, envId: req.params.envId, deploymentId: req.params.deploymentId, message: error.message, stack: error.stack });
     sendProxyError(res, error, 'Failed to fetch schedulers');
   }
 });
@@ -184,12 +191,16 @@ router.get('/cloudhub1/:envId/:appName/schedules', authMiddleware, async (req, r
   try {
     const client = createClient(req.anypointToken);
     const orgId = req.query.orgId || req.orgId;
+    console.info(`[Applications] Fetching CH1 schedules org=${orgId} env=${req.params.envId} app=${req.params.appName}`);
     const response = await client.get(
       `/cloudhub/api/applications/${req.params.appName}/schedules`,
       { headers: makeCh1Headers(req.params.envId, orgId) }
     );
+    const items = Array.isArray(response.data) ? response.data : response.data?.schedules || response.data?.items || [];
+    console.info(`[Applications] CH1 schedules loaded org=${orgId} env=${req.params.envId} app=${req.params.appName} count=${items.length}`);
     res.json(response.data);
   } catch (error) {
+    console.error('[Applications] Failed to fetch CH1 schedules', { orgId: req.query.orgId || req.orgId, envId: req.params.envId, appName: req.params.appName, message: error.message, stack: error.stack });
     sendProxyError(res, error, 'Failed to fetch schedules');
   }
 });
