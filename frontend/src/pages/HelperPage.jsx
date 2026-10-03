@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CalendarClock, Clock3, FileText, PlayCircle, Search, Upload, Wrench } from 'lucide-react';
 import cronstrue from 'cronstrue';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { downloadCsv } from '../utils/appUtils';
 
 const normalizeHeader = (value = '') => String(value).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 const normalizeName = (value = '') => String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -265,6 +266,7 @@ function parseCsvJobs(csvText) {
         id: `${jobName}-${index}-${appName}`,
         jobName,
         appName,
+        environment: '',
         cron: resolvedCron,
         decryptedCron: readableCron,
         startTime: parsedStart,
@@ -407,6 +409,7 @@ async function fetchSchedulerRecordsForApp(app, orgId) {
         id: `${detail.name || app.name}-${flowName}-${index}`,
         jobName: flowName,
         appName: detail.name || app.name,
+        environment: detail.environment?.name || detail.environment?.environmentName || app.environment?.name || app.environment?.environmentName || '',
         cron: resolvedCron,
         decryptedCron: readableCron,
         startTime,
@@ -419,13 +422,16 @@ async function fetchSchedulerRecordsForApp(app, orgId) {
   }
 }
 
-async function resolveJobsFromCsv(csvText, orgId) {
+async function resolveJobsFromCsv(csvText, orgId, envIds = []) {
   const names = extractJobNames(csvText)
     .map((value) => value.trim())
     .filter(Boolean)
     .map((value) => value.replace(/\s+/g, ' '));
 
+  const activeEnvIds = Array.isArray(envIds) && envIds.length ? new Set(envIds) : null;
+
   console.debug('[HelperPage] CSV names extracted:', names);
+  console.debug('[HelperPage] Selected env ids:', envIds);
 
   if (!names.length) {
     const parsed = parseCsvJobs(csvText);
@@ -450,18 +456,24 @@ async function resolveJobsFromCsv(csvText, orgId) {
       try {
         const appRes = await api.get(`/applications/summary/${groupId}`);
         const list = appRes?.data?.data || appRes?.data?.applications || appRes?.data || [];
-        list.forEach((app) => apps.push({ ...app, _bgId: groupId }));
+        list.forEach((app) => {
+          const appEnvId = app?.environment?.id || app?.environmentId || app?.envId || app?.target?.environment?.id;
+          if (activeEnvIds && appEnvId && !activeEnvIds.has(appEnvId)) return;
+          if (activeEnvIds && !appEnvId) return;
+          apps.push({ ...app, _bgId: groupId, _envId: appEnvId || null });
+        });
       } catch (error) {
         console.warn(`[HelperPage] Failed to fetch apps for BG ${groupId}:`, error);
       }
     }
 
     if (!apps.length) {
-      console.warn('[HelperPage] No apps were available to resolve CSV job names, returning fallback rows.');
+      console.warn('[HelperPage] No apps matched the selected environment scope, returning fallback rows.');
       return names.map((name, index) => ({
         id: `fallback-${index}`,
         jobName: name,
         appName: 'N/A',
+        environment: activeEnvIds ? 'Selected env scope' : 'N/A',
         cron: '',
         decryptedCron: '',
         startTime: null,
@@ -480,7 +492,7 @@ async function resolveJobsFromCsv(csvText, orgId) {
           if (!name) return false;
           return schedulerName === name || schedulerName.includes(name) || name.includes(schedulerName);
         });
-        if (isMatch) matched.push(scheduler);
+        if (isMatch) matched.push({ ...scheduler, environment: scheduler.environment || app.environment?.name || app.environment?.environmentName || 'N/A' });
       }
     }
 
@@ -491,6 +503,7 @@ async function resolveJobsFromCsv(csvText, orgId) {
       id: `fallback-${index}`,
       jobName: name,
       appName: 'N/A',
+      environment: activeEnvIds ? 'Selected env scope' : 'N/A',
       cron: '',
       decryptedCron: '',
       startTime: null,
@@ -502,6 +515,7 @@ async function resolveJobsFromCsv(csvText, orgId) {
       id: `fallback-${index}`,
       jobName: name,
       appName: 'N/A',
+      environment: activeEnvIds ? 'Selected env scope' : 'N/A',
       cron: '',
       decryptedCron: '',
       startTime: null,
@@ -517,13 +531,94 @@ export default function HelperPage() {
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [envOptions, setEnvOptions] = useState([]);
+  const [selectedEnvIds, setSelectedEnvIds] = useState([]);
+  const [envLoading, setEnvLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const jobs = useMemo(() => rows, [rows]);
 
+  useEffect(() => {
+    if (!orgId) return;
+
+    let isMounted = true;
+    const loadEnvironmentOptions = async () => {
+      setEnvLoading(true);
+      try {
+        const groupRes = await api.get('/organizations/business-groups');
+        const groups = groupRes?.data?.data || groupRes?.data?.businessGroups || groupRes?.data || [];
+        const envs = [];
+
+        for (const group of groups) {
+          const groupId = group.id || group.orgId || group.organizationId;
+          if (!groupId) continue;
+          try {
+            const envRes = await api.get(`/environments/${groupId}`);
+            const list = envRes?.data?.data || envRes?.data?.environments || envRes?.data || [];
+            list.forEach((env) => {
+              const id = env.id || env.environmentId || env.envId;
+              if (!id || envs.some((item) => item.id === id)) return;
+              envs.push({
+                id,
+                name: env.name || env.environmentName || 'Unnamed environment',
+                type: env.type || env.environmentType || 'unknown',
+                bgName: group.name || group.organizationName || 'Business Group',
+              });
+            });
+          } catch (envError) {
+            console.warn(`[HelperPage] Failed to load environments for BG ${groupId}:`, envError);
+          }
+        }
+
+        if (!isMounted) return;
+        setEnvOptions(envs);
+        setSelectedEnvIds((prev) => {
+          const validPrev = prev.filter((id) => envs.some((env) => env.id === id));
+          if (validPrev.length > 0) return validPrev;
+          return envs.map((env) => env.id);
+        });
+      } catch (error) {
+        console.warn('[HelperPage] Failed to load environment list:', error);
+      } finally {
+        if (isMounted) setEnvLoading(false);
+      }
+    };
+
+    loadEnvironmentOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, [orgId]);
+
+  const handleEnvToggle = (envId) => {
+    setSelectedEnvIds((prev) => {
+      if (prev.includes(envId)) return prev.filter((id) => id !== envId);
+      return [...prev, envId];
+    });
+  };
+
+  const handleSelectAllEnvs = () => {
+    setSelectedEnvIds(envOptions.map((env) => env.id));
+  };
+
+  const handleClearEnvSelection = () => {
+    setSelectedEnvIds([]);
+  };
+
+  const selectedEnvNames = envOptions
+    .filter((env) => selectedEnvIds.includes(env.id))
+    .map((env) => env.name);
+
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    if (selectedEnvIds.length === 0) {
+      setRows([]);
+      setError('Please select at least one environment before uploading the CSV.');
+      event.target.value = '';
+      return;
+    }
 
     setFileName(file.name);
     setLoading(true);
@@ -533,18 +628,35 @@ export default function HelperPage() {
     reader.onload = async () => {
       try {
         const csvText = String(reader.result || '');
-        const parsed = await resolveJobsFromCsv(csvText, orgId);
+        const parsed = await resolveJobsFromCsv(csvText, orgId, selectedEnvIds);
         setRows(parsed);
-        setError(parsed.length ? '' : 'No matching job schedules were found. Upload a CSV that contains job names or scheduler rows that exist in this org.');
+        setError(parsed.length ? '' : 'No matching job schedules were found in the selected environment scope.');
       } catch {
         setRows([]);
-        setError('The uploaded file could not be parsed or no job details could be resolved.');
+        setError('The uploaded file could not be parsed or no job details could be resolved for the selected environment.' );
       } finally {
         setLoading(false);
         event.target.value = '';
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleExport = () => {
+    if (!jobs.length) return;
+
+    const headers = ['Job Name', 'Application', 'Environment', 'Start Time', 'Next Execution', 'Cron', 'Decoded Schedule'];
+    const rowsForCsv = jobs.map((job) => [
+      job.jobName || '',
+      job.appName || '',
+      job.environment || '',
+      job.startTime ? job.startTime.toISOString() : '',
+      job.nextExecution ? job.nextExecution.toISOString() : '',
+      job.cron || '',
+      job.decryptedCron || '',
+    ]);
+
+    downloadCsv([headers, ...rowsForCsv], `scheduler-helper-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   return (
@@ -554,13 +666,93 @@ export default function HelperPage() {
           <p className="text-[10px] uppercase tracking-[0.2em] text-sf-600 dark:text-sf-400 font-bold">Helper</p>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">Scheduler Helper</h1>
         </div>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-2 rounded-xl border border-sf-200 bg-sf-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sf-500 transition-colors"
-        >
-          <Upload size={16} />
-          Upload CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-xl border border-sf-200 bg-sf-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sf-500 transition-colors"
+          >
+            <Upload size={16} />
+            Upload CSV
+          </button>
+          {jobs.length > 0 && (
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors"
+            >
+              <FileText size={16} />
+              Export CSV
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-sf-200 bg-white/80 p-4 dark:bg-gray-900/60 dark:border-sf-500/30">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-sf-600 dark:text-sf-400 font-bold">Environment scope</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Choose one or more environments before loading the CSV.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSelectAllEnvs}
+                className="rounded-lg border border-sf-200 bg-sf-50 px-2.5 py-1.5 text-xs font-medium text-sf-700 hover:bg-sf-100 dark:border-sf-500/30 dark:bg-sf-500/10 dark:text-sf-200"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={handleClearEnvSelection}
+                className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          {envLoading ? (
+            <div className="text-sm text-gray-500 dark:text-gray-400">Loading environments…</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {envOptions.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400">No environments were found for the current org.</div>
+              ) : envOptions.map((env) => {
+                const active = selectedEnvIds.includes(env.id);
+                return (
+                  <button
+                    key={env.id}
+                    type="button"
+                    onClick={() => handleEnvToggle(env.id)}
+                    className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
+                      active
+                        ? 'border-sf-300 bg-sf-50 text-sf-700 dark:border-sf-500/40 dark:bg-sf-500/10 dark:text-sf-200'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{env.name}</div>
+                      <div className="truncate text-[11px] text-gray-500 dark:text-gray-400">{env.bgName}</div>
+                    </div>
+                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${active ? 'bg-sf-600 text-white' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                      {active ? '✓' : ''}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {selectedEnvNames.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {selectedEnvNames.map((envName) => (
+                <span key={envName} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  {envName}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleUpload} className="hidden" />
@@ -571,8 +763,8 @@ export default function HelperPage() {
             <Wrench size={18} />
           </div>
           <div>
-            <p className="font-semibold">Upload a CSV containing job names or scheduler rows</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">The helper resolves live app data, scheduler definitions, and CPS property values so the cron and next run are accurate.</p>
+            <p className="font-semibold">Select the environment(s) and upload a CSV of job names or scheduler rows</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">The helper resolves live app data, scheduler definitions, and CPS property values for the selected scope and prints the job details in a table.</p>
           </div>
         </div>
       </div>
@@ -594,7 +786,7 @@ export default function HelperPage() {
 
       {loading && (
         <div className="rounded-2xl border border-sf-200 bg-sf-50 px-4 py-3 text-sm text-sf-700 dark:border-sf-500/30 dark:bg-sf-500/10 dark:text-sf-200">
-          Resolving scheduler details from the app metadata and CPS properties…
+          Resolving scheduler details for {selectedEnvNames.length ? selectedEnvNames.join(', ') : 'the selected environment scope'}…
         </div>
       )}
 
@@ -604,7 +796,7 @@ export default function HelperPage() {
             <Search size={20} />
           </div>
           <p className="text-base font-medium text-gray-700 dark:text-gray-200">No jobs resolved yet</p>
-          <p className="mt-1 text-sm">Upload a CSV of job names to resolve the app, cron, start time, and next execution values from the live scheduler data.</p>
+          <p className="mt-1 text-sm">Select one or more environments and upload a CSV of job names to resolve the app, cron, start time, and next execution values from the live scheduler data.</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
@@ -614,6 +806,7 @@ export default function HelperPage() {
                 <tr>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Job</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Application</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Environment</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Start Time</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Next Execution</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Cron</th>
@@ -627,6 +820,7 @@ export default function HelperPage() {
                       <div className="font-semibold text-gray-800 dark:text-gray-100">{job.jobName}</div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{job.appName}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{job.environment || '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
                       {job.startTime ? (
                         <div className="flex items-center gap-2">
