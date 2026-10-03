@@ -305,12 +305,32 @@ function extractJobNames(csvText) {
 function getGlobalSelectedEnvKeys() {
   try {
     const raw = sessionStorage.getItem('userSearch_selections');
-    if (!raw) return [];
+
+    if (!raw) {
+      console.info('[HelperPage] No global environment selection found.');
+      return [];
+    }
+
     const value = JSON.parse(raw);
-    if (!Array.isArray(value)) return [];
-    return value.filter(Boolean);
+
+    if (!Array.isArray(value)) {
+      console.warn('[HelperPage] Global environment selection is not an array.');
+      return [];
+    }
+
+    const keys = value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+
+    console.info('[HelperPage] Global selected environment keys:', keys);
+
+    return keys;
   } catch (error) {
-    console.warn('[HelperPage] Failed to read persisted global env selection:', error);
+    console.warn(
+      '[HelperPage] Failed to read persisted global env selection:',
+      error
+    );
+
     return [];
   }
 }
@@ -594,80 +614,271 @@ export default function HelperPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
+    useEffect(() => {
     if (!orgId) return;
 
     let isMounted = true;
+
     const loadEnvironmentOptions = async () => {
       setEnvLoading(true);
+      setError('');
+
       try {
-        console.info('[HelperPage] Loading globally selected envs for helper lookup');
+        console.info(
+          '[HelperPage] Loading environments selected in Global Search...'
+        );
+
+        /*
+         * Global Search stores selections as:
+         *
+         *     BUSINESS_GROUP_ID:ENVIRONMENT_ID
+         *
+         * Example:
+         *
+         *     123:456
+         *     123:789
+         *
+         * We MUST preserve both IDs.
+         */
         const globalSelectionKeys = new Set(getGlobalSelectedEnvKeys());
 
+        console.info(
+          '[HelperPage] Global environment scope:',
+          [...globalSelectionKeys]
+        );
+
+        /*
+         * No global selection means Helper should not search
+         * all environments.
+         */
+        if (globalSelectionKeys.size === 0) {
+          console.warn(
+            '[HelperPage] No environments selected in Global Search.'
+          );
+
+          if (isMounted) {
+            setEnvOptions([]);
+            setSelectedEnvIds([]);
+            setEnvLoading(false);
+          }
+
+          return;
+        }
+
         const groupRes = await api.get('/organizations/business-groups');
-        const groups = groupRes?.data?.data || groupRes?.data?.businessGroups || groupRes?.data || [];
+
+        const groups =
+          groupRes?.data?.data ||
+          groupRes?.data?.businessGroups ||
+          groupRes?.data ||
+          [];
+
+        console.info(
+          `[HelperPage] Business groups loaded: ${groups.length}`
+        );
+
         const envs = [];
 
         for (const group of groups) {
-          const groupId = group.id || group.orgId || group.organizationId;
-          if (!groupId) continue;
+          const groupId =
+            group.id ||
+            group.orgId ||
+            group.organizationId;
+
+          if (!groupId) {
+            continue;
+          }
+
+          /*
+           * Only inspect environments that could possibly
+           * belong to the Global Search selection.
+           */
+          const groupSelectionKeys = [...globalSelectionKeys].filter(
+            (key) => key.startsWith(`${groupId}:`)
+          );
+
+          if (groupSelectionKeys.length === 0) {
+            continue;
+          }
+
           try {
-            const envRes = await api.get(`/environments/${groupId}`);
-            const list = envRes?.data?.data || envRes?.data?.environments || envRes?.data || [];
-            list.forEach((env) => {
-              const id = env.id || env.environmentId || env.envId;
-              if (!id || envs.some((item) => item.id === id)) return;
-              const bgKey = `${groupId}:${id}`;
-              const visible = globalSelectionKeys.size === 0 || globalSelectionKeys.has(bgKey);
-              if (!visible) return;
+            console.info(
+              `[HelperPage] Loading environments for selected BG: ${group.name || groupId}`
+            );
+
+            const envRes = await api.get(
+              `/environments/${groupId}`
+            );
+
+            const list =
+              envRes?.data?.data ||
+              envRes?.data?.environments ||
+              envRes?.data ||
+              [];
+
+            for (const env of list) {
+              const envId =
+                env.id ||
+                env.environmentId ||
+                env.envId;
+
+              if (!envId) {
+                continue;
+              }
+
+              /*
+               * IMPORTANT:
+               *
+               * Environment identity is:
+               *
+               *     BG ID + ENV ID
+               *
+               * NOT ENV ID alone.
+               */
+              const selectionKey =
+                `${groupId}:${envId}`;
+
+              /*
+               * Only include environments explicitly
+               * selected in Global Search.
+               */
+              if (!globalSelectionKeys.has(selectionKey)) {
+                continue;
+              }
+
+              /*
+               * Avoid duplicate composite keys.
+               */
+              if (
+                envs.some(
+                  (item) => item.key === selectionKey
+                )
+              ) {
+                continue;
+              }
+
               envs.push({
-                id,
-                name: env.name || env.environmentName || 'Unnamed environment',
-                type: env.type || env.environmentType || 'unknown',
+                id: envId,
+
+                /*
+                 * Composite key used internally by Helper.
+                 */
+                key: selectionKey,
+
+                name:
+                  env.name ||
+                  env.environmentName ||
+                  'Unnamed environment',
+
+                type:
+                  env.type ||
+                  env.environmentType ||
+                  'unknown',
+
                 bgId: groupId,
-                bgName: group.name || group.organizationName || 'Business Group',
+
+                bgName:
+                  group.name ||
+                  group.organizationName ||
+                  'Business Group',
               });
-            });
+
+              console.info(
+                '[HelperPage] Added selected environment:',
+                {
+                  key: selectionKey,
+                  bgId: groupId,
+                  bgName:
+                    group.name ||
+                    group.organizationName ||
+                    'Business Group',
+                  envId,
+                  envName:
+                    env.name ||
+                    env.environmentName ||
+                    'Unnamed environment',
+                  envType:
+                    env.type ||
+                    env.environmentType ||
+                    'unknown',
+                }
+              );
+            }
           } catch (envError) {
-            console.warn(`[HelperPage] Failed to load environments for BG ${groupId}:`, envError);
+            console.warn(
+              `[HelperPage] Failed to load environments for BG ${groupId}:`,
+              envError
+            );
           }
         }
 
         if (!isMounted) return;
+
+        console.info(
+          `[HelperPage] Final Helper environment scope: ${envs.length} environment(s)`
+        );
+
         setEnvOptions(envs);
 
-        if (globalSelectionKeys.size > 0) {
-          const selectedFromGlobal = envs.map((env) => env.id);
-          setSelectedEnvIds(selectedFromGlobal);
-        } else {
-          setSelectedEnvIds([]);
-        }
+        /*
+         * Select every environment that came from
+         * Global Search.
+         */
+        setSelectedEnvIds(
+          envs.map((env) => env.key)
+        );
 
         if (envs.length === 0) {
-          console.warn('[HelperPage] No global envs selected for helper lookup; user must pick envs in Global Search first.');
+          console.warn(
+            '[HelperPage] Global Search has selected environments, but none could be resolved.'
+          );
+
+          setError(
+            'The environments selected in Global Search could not be resolved.'
+          );
         }
       } catch (error) {
-        console.warn('[HelperPage] Failed to load environment list:', error);
+        console.error(
+          '[HelperPage] Failed to load environment list:',
+          error
+        );
+
+        if (isMounted) {
+          setEnvOptions([]);
+          setSelectedEnvIds([]);
+
+          setError(
+            'Unable to load the environments selected in Global Search.'
+          );
+        }
       } finally {
-        if (isMounted) setEnvLoading(false);
+        if (isMounted) {
+          setEnvLoading(false);
+        }
       }
     };
 
     loadEnvironmentOptions();
+
     return () => {
       isMounted = false;
     };
   }, [orgId]);
 
-  const handleEnvToggle = (envId) => {
+  const handleEnvToggle = (envKey) => {
     setSelectedEnvIds((prev) => {
-      if (prev.includes(envId)) return prev.filter((id) => id !== envId);
-      return [...prev, envId];
+      if (prev.includes(envKey)) {
+        return prev.filter((key) => key !== envKey);
+      }
+
+      return [...prev, envKey];
     });
   };
 
   const handleSelectAllEnvs = () => {
-    setSelectedEnvIds(envOptions.map((env) => env.id));
+    setSelectedEnvIds(
+      envOptions.map((env) => env.key)
+    );
   };
 
   const handleClearEnvSelection = () => {
@@ -675,7 +886,7 @@ export default function HelperPage() {
   };
 
   const selectedEnvNames = envOptions
-    .filter((env) => selectedEnvIds.includes(env.id))
+    .filter((env) => selectedEnvIds.includes(env.key))
     .map((env) => env.name);
 
   const selectedEnvSummary = selectedEnvNames.length === 0
@@ -832,12 +1043,12 @@ export default function HelperPage() {
 
                 <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
                   {productionCount > 0 && (
-                    <button type="button" onClick={() => setSelectedEnvIds(envOptions.filter((env) => String(env.type).toLowerCase() === 'production').map((env) => env.id))} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    <button type="button" onClick={() =>setSelectedEnvIds( envOptions.filter((env) =>String(env.type).toLowerCase() === 'production').map((env) => env.key))} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
                       Production ({productionCount})
                     </button>
                   )}
                   {sandboxCount > 0 && (
-                    <button type="button" onClick={() => setSelectedEnvIds(envOptions.filter((env) => String(env.type).toLowerCase() !== 'production').map((env) => env.id))} className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                    <button type="button" onClick={() =>setSelectedEnvIds( envOptions.filter((env) =>String(env.type).toLowerCase() !== 'production').map((env) => env.key))} className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                       Sandbox ({sandboxCount})
                     </button>
                   )}
@@ -857,7 +1068,7 @@ export default function HelperPage() {
                     <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{envSearch ? `No environments match "${envSearch}"` : 'No environments available'}</div>
                   ) : (
                     groupedEnvOptions.map(({ bgName, envs }) => {
-                      const bgSelectedCount = envs.filter((env) => selectedEnvIds.includes(env.id)).length;
+                      const bgSelectedCount = envs.filter((env) => selectedEnvIds.includes(env.key)).length;
                       const allBgSelected = bgSelectedCount === envs.length;
                       const someBgSelected = bgSelectedCount > 0 && bgSelectedCount < envs.length;
 
@@ -865,7 +1076,7 @@ export default function HelperPage() {
                         <div key={bgName} className="border-b border-gray-200 last:border-b-0 dark:border-gray-700">
                           <div
                             onClick={() => {
-                              const ids = envs.map((env) => env.id);
+                              const ids = envs.map((env) => env.key);
                               setSelectedEnvIds((prev) => {
                                 const next = new Set(prev);
                                 if (ids.every((id) => next.has(id))) ids.forEach((id) => next.delete(id));
@@ -883,12 +1094,12 @@ export default function HelperPage() {
                           </div>
 
                           {envs.map((env) => {
-                            const active = selectedEnvIds.includes(env.id);
+                            const active = selectedEnvIds.includes(env.key);
                             return (
                               <button
-                                key={env.id}
+                                key={env.key}
                                 type="button"
-                                onClick={() => handleEnvToggle(env.id)}
+                                onClick={() => handleEnvToggle(env.key)}
                                 className={`flex w-full items-center gap-3 border-b border-gray-100 px-3 py-2 text-left transition last:border-b-0 dark:border-gray-700 ${active ? 'bg-sf-50 dark:bg-sf-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/70'}`}
                               >
                                 <span className={`flex h-4 w-4 items-center justify-center rounded border ${active ? 'border-sf-500 bg-sf-500 text-white' : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'}`}>
