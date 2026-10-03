@@ -250,6 +250,30 @@ function resolveCronExpression(rawCron, propsMap = {}, cpsMap = {}) {
   });
 }
 
+function decodeCronExpression(cron) {
+  if (!cron) return '';
+
+  const expression = String(cron).trim();
+
+  if (!expression) return '';
+
+  try {
+    return cronstrue.toString(expression, {
+      throwExceptionOnParseError: true,
+    });
+  } catch (error) {
+    console.warn(
+      '[HelperPage] Could not decode cron expression:',
+      {
+        cron: expression,
+        message: error?.message,
+      }
+    );
+
+    return '';
+  }
+}
+
 function findColumn(row, aliases) {
   const keys = Object.keys(row);
   for (const alias of aliases) {
@@ -951,6 +975,23 @@ async function resolveJobsFromCsv(
         : Array.isArray(responseData?.rows)
           ? responseData.rows
           : [];
+  const jobsWithDecodedCron = discoveredJobs.map((job) => {
+      const rawCron =
+        job?.cron ||
+        job?.cronExpression ||
+        job?.schedule?.cronExpression ||
+        '';
+
+      const decodedCron =
+        job?.decryptedCron ||
+        decodeCronExpression(rawCron);
+
+      return {
+        ...job,
+        cron: rawCron,
+        decryptedCron: decodedCron,
+      };
+    });
 
   console.info(
     '[HelperPage] Backend scheduler discovery result:',
@@ -971,7 +1012,7 @@ async function resolveJobsFromCsv(
    */
 
   if (!csvText || !csvText.trim()) {
-    return discoveredJobs;
+    return jobsWithDecodedCron;
   }
 
   /*
@@ -997,7 +1038,7 @@ async function resolveJobsFromCsv(
       '[HelperPage] CSV was provided, but no application names were found.'
     );
 
-    return discoveredJobs;
+    return jobsWithDecodedCron;
   }
 
   const normalizedApplicationNames = new Set(
@@ -1006,7 +1047,7 @@ async function resolveJobsFromCsv(
       .filter(Boolean)
   );
 
-  const filteredJobs = discoveredJobs.filter((job) => {
+  const filteredJobs = jobsWithDecodedCron.filter((job) => {
     const jobApplicationName = normalizeName(
       job?.appName || job?.application
     );
