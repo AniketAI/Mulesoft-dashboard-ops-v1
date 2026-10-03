@@ -294,10 +294,10 @@ function extractJobNames(csvText) {
   }
 
   if (rows[0].length === 1) {
-    return rows.map((row) => normalizeCell(row[0])).filter(Boolean);
+    return rows.slice(1).map((row) => normalizeCell(row[0])).filter(Boolean);
   }
 
-  return rows.map((row) => normalizeCell(row[0])).filter(Boolean);
+  return rows.slice(1).map((row) => normalizeCell(row[0])).filter(Boolean);
 }
 
 async function fetchCpsProperties(app, orgId) {
@@ -413,7 +413,8 @@ async function fetchSchedulerRecordsForApp(app, orgId) {
         nextExecution,
       };
     });
-  } catch {
+  } catch (error) {
+    console.warn('[HelperPage] fetchSchedulerRecordsForApp failed:', error);
     return [];
   }
 }
@@ -424,8 +425,11 @@ async function resolveJobsFromCsv(csvText, orgId) {
     .filter(Boolean)
     .map((value) => value.replace(/\s+/g, ' '));
 
+  console.debug('[HelperPage] CSV names extracted:', names);
+
   if (!names.length) {
     const parsed = parseCsvJobs(csvText);
+    console.debug('[HelperPage] Parsed schedule rows:', parsed.length);
     return parsed.length ? parsed : [];
   }
 
@@ -434,7 +438,8 @@ async function resolveJobsFromCsv(csvText, orgId) {
     try {
       const groupRes = await api.get('/organizations/business-groups');
       groups = groupRes?.data?.data || groupRes?.data?.businessGroups || groupRes?.data || [];
-    } catch {
+    } catch (error) {
+      console.warn('[HelperPage] /organizations/business-groups fetch failed:', error);
       groups = [];
     }
 
@@ -446,13 +451,22 @@ async function resolveJobsFromCsv(csvText, orgId) {
         const appRes = await api.get(`/applications/summary/${groupId}`);
         const list = appRes?.data?.data || appRes?.data?.applications || appRes?.data || [];
         list.forEach((app) => apps.push({ ...app, _bgId: groupId }));
-      } catch {
-        // Ignore a single business group failure and continue scanning the rest.
+      } catch (error) {
+        console.warn(`[HelperPage] Failed to fetch apps for BG ${groupId}:`, error);
       }
     }
 
     if (!apps.length) {
-      return parseCsvJobs(csvText);
+      console.warn('[HelperPage] No apps were available to resolve CSV job names, returning fallback rows.');
+      return names.map((name, index) => ({
+        id: `fallback-${index}`,
+        jobName: name,
+        appName: 'N/A',
+        cron: '',
+        decryptedCron: '',
+        startTime: null,
+        nextExecution: null,
+      }));
     }
 
     const matched = [];
@@ -472,6 +486,7 @@ async function resolveJobsFromCsv(csvText, orgId) {
 
     if (matched.length) return matched;
 
+    console.warn('[HelperPage] No scheduler matches found for uploaded names, returning fallback labels.');
     return names.map((name, index) => ({
       id: `fallback-${index}`,
       jobName: name,
@@ -481,8 +496,18 @@ async function resolveJobsFromCsv(csvText, orgId) {
       startTime: null,
       nextExecution: null,
     }));
-  } catch {
-    return parseCsvJobs(csvText);
+  } catch (error) {
+    console.warn('[HelperPage] resolveJobsFromCsv failed:', error);
+    const fallback = names.map((name, index) => ({
+      id: `fallback-${index}`,
+      jobName: name,
+      appName: 'N/A',
+      cron: '',
+      decryptedCron: '',
+      startTime: null,
+      nextExecution: null,
+    }));
+    return fallback.length ? fallback : parseCsvJobs(csvText);
   }
 }
 
