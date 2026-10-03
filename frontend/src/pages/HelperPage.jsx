@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, CalendarClock, Clock3, FileText, PlayCircle, Search, Upload, Wrench } from 'lucide-react';
+import { AlertCircle, CalendarClock, Check, ChevronDown, Clock3, FileText, Layers3, PlayCircle, Search, Upload, Wrench } from 'lucide-react';
 import cronstrue from 'cronstrue';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -422,13 +422,14 @@ async function fetchSchedulerRecordsForApp(app, orgId) {
   }
 }
 
-async function resolveJobsFromCsv(csvText, orgId, envIds = []) {
+async function resolveJobsFromCsv(csvText, orgId, envIds = [], envLabels = []) {
   const names = extractJobNames(csvText)
     .map((value) => value.trim())
     .filter(Boolean)
     .map((value) => value.replace(/\s+/g, ' '));
 
   const activeEnvIds = Array.isArray(envIds) && envIds.length ? new Set(envIds) : null;
+  const envScopeLabel = Array.isArray(envLabels) && envLabels.length ? envLabels.join(', ') : 'Selected env scope';
 
   console.debug('[HelperPage] CSV names extracted:', names);
   console.debug('[HelperPage] Selected env ids:', envIds);
@@ -473,7 +474,7 @@ async function resolveJobsFromCsv(csvText, orgId, envIds = []) {
         id: `fallback-${index}`,
         jobName: name,
         appName: 'N/A',
-        environment: activeEnvIds ? 'Selected env scope' : 'N/A',
+        environment: envScopeLabel,
         cron: '',
         decryptedCron: '',
         startTime: null,
@@ -492,7 +493,10 @@ async function resolveJobsFromCsv(csvText, orgId, envIds = []) {
           if (!name) return false;
           return schedulerName === name || schedulerName.includes(name) || name.includes(schedulerName);
         });
-        if (isMatch) matched.push({ ...scheduler, environment: scheduler.environment || app.environment?.name || app.environment?.environmentName || 'N/A' });
+        if (isMatch) matched.push({
+          ...scheduler,
+          environment: scheduler.environment || app.environment?.name || app.environment?.environmentName || envScopeLabel,
+        });
       }
     }
 
@@ -503,7 +507,7 @@ async function resolveJobsFromCsv(csvText, orgId, envIds = []) {
       id: `fallback-${index}`,
       jobName: name,
       appName: 'N/A',
-      environment: activeEnvIds ? 'Selected env scope' : 'N/A',
+      environment: envScopeLabel,
       cron: '',
       decryptedCron: '',
       startTime: null,
@@ -515,7 +519,7 @@ async function resolveJobsFromCsv(csvText, orgId, envIds = []) {
       id: `fallback-${index}`,
       jobName: name,
       appName: 'N/A',
-      environment: activeEnvIds ? 'Selected env scope' : 'N/A',
+      environment: envScopeLabel,
       cron: '',
       decryptedCron: '',
       startTime: null,
@@ -529,14 +533,28 @@ export default function HelperPage() {
   const { orgId } = useAuth();
   const [rows, setRows] = useState([]);
   const [fileName, setFileName] = useState('');
+  const [csvText, setCsvText] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [envOptions, setEnvOptions] = useState([]);
   const [selectedEnvIds, setSelectedEnvIds] = useState([]);
   const [envLoading, setEnvLoading] = useState(false);
+  const [envMenuOpen, setEnvMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const envMenuRef = useRef(null);
 
   const jobs = useMemo(() => rows, [rows]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (envMenuRef.current && !envMenuRef.current.contains(event.target)) {
+        setEnvMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!orgId) return;
@@ -609,6 +627,14 @@ export default function HelperPage() {
     .filter((env) => selectedEnvIds.includes(env.id))
     .map((env) => env.name);
 
+  const selectedEnvSummary = selectedEnvNames.length === 0
+    ? 'Select environment'
+    : selectedEnvNames.length === envOptions.length && envOptions.length > 0
+      ? 'All environments'
+      : selectedEnvNames.length > 2
+        ? `${selectedEnvNames.slice(0, 2).join(', ')}, +${selectedEnvNames.length - 2}`
+        : selectedEnvNames.join(', ');
+
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -621,25 +647,43 @@ export default function HelperPage() {
     }
 
     setFileName(file.name);
+    setError('');
+    setRows([]);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const nextCsvText = String(reader.result || '');
+      setCsvText(nextCsvText);
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
+  const handleGetDetails = async () => {
+    if (!csvText.trim()) {
+      setError('Upload a CSV file before fetching job details.');
+      return;
+    }
+
+    if (selectedEnvIds.length === 0) {
+      setRows([]);
+      setError('Please select at least one environment before fetching job details.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const csvText = String(reader.result || '');
-        const parsed = await resolveJobsFromCsv(csvText, orgId, selectedEnvIds);
-        setRows(parsed);
-        setError(parsed.length ? '' : 'No matching job schedules were found in the selected environment scope.');
-      } catch {
-        setRows([]);
-        setError('The uploaded file could not be parsed or no job details could be resolved for the selected environment.' );
-      } finally {
-        setLoading(false);
-        event.target.value = '';
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const parsed = await resolveJobsFromCsv(csvText, orgId, selectedEnvIds, selectedEnvNames);
+      setRows(parsed);
+      setError(parsed.length ? '' : 'No matching job schedules were found in the selected environment scope.');
+    } catch {
+      setRows([]);
+      setError('The uploaded file could not be parsed or no job details could be resolved for the selected environment.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExport = () => {
@@ -674,6 +718,17 @@ export default function HelperPage() {
             <Upload size={16} />
             Upload CSV
           </button>
+
+          <button
+            type="button"
+            onClick={handleGetDetails}
+            disabled={!csvText.trim() || loading || selectedEnvIds.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl border border-sf-200 bg-white px-4 py-2.5 text-sm font-semibold text-sf-700 shadow-sm transition hover:bg-sf-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sf-500/30 dark:bg-gray-900 dark:text-sf-200 dark:hover:bg-sf-500/5"
+          >
+            <Search size={16} />
+            {loading ? 'Fetching…' : 'Get Details'}
+          </button>
+
           {jobs.length > 0 && (
             <button
               onClick={handleExport}
@@ -687,71 +742,66 @@ export default function HelperPage() {
       </div>
 
       <div className="rounded-2xl border border-sf-200 bg-white/80 p-4 dark:bg-gray-900/60 dark:border-sf-500/30">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-sf-600 dark:text-sf-400 font-bold">Environment scope</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Choose one or more environments before loading the CSV.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSelectAllEnvs}
-                className="rounded-lg border border-sf-200 bg-sf-50 px-2.5 py-1.5 text-xs font-medium text-sf-700 hover:bg-sf-100 dark:border-sf-500/30 dark:bg-sf-500/10 dark:text-sf-200"
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={handleClearEnvSelection}
-                className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
-              >
-                Clear
-              </button>
-            </div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-sf-600 dark:text-sf-400 font-bold">Environment scope</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Select the environments to scan before fetching job details.</p>
           </div>
 
-          {envLoading ? (
-            <div className="text-sm text-gray-500 dark:text-gray-400">Loading environments…</div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-              {envOptions.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400">No environments were found for the current org.</div>
-              ) : envOptions.map((env) => {
-                const active = selectedEnvIds.includes(env.id);
-                return (
-                  <button
-                    key={env.id}
-                    type="button"
-                    onClick={() => handleEnvToggle(env.id)}
-                    className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
-                      active
-                        ? 'border-sf-300 bg-sf-50 text-sf-700 dark:border-sf-500/40 dark:bg-sf-500/10 dark:text-sf-200'
-                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{env.name}</div>
-                      <div className="truncate text-[11px] text-gray-500 dark:text-gray-400">{env.bgName}</div>
-                    </div>
-                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${active ? 'bg-sf-600 text-white' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                      {active ? '✓' : ''}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div ref={envMenuRef} className="relative w-full max-w-md">
+            <button
+              type="button"
+              onClick={() => setEnvMenuOpen((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-2 rounded-xl border border-sf-200 bg-white px-3 py-2.5 text-left text-sm shadow-sm transition hover:border-sf-300 dark:border-sf-500/30 dark:bg-sf-500/5 dark:text-sf-200"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <Layers3 size={15} className="text-sf-600 dark:text-sf-300" />
+                <span className="truncate font-medium text-gray-700 dark:text-gray-100">{selectedEnvSummary}</span>
+              </div>
+              <ChevronDown size={14} className={`text-gray-400 transition ${envMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-          {selectedEnvNames.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {selectedEnvNames.map((envName) => (
-                <span key={envName} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-                  {envName}
-                </span>
-              ))}
-            </div>
-          )}
+            {envMenuOpen && (
+              <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+                <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                  <button type="button" onClick={handleSelectAllEnvs} className="rounded-lg border border-sf-200 bg-sf-50 px-2 py-1 text-[11px] font-medium text-sf-700 dark:border-sf-500/30 dark:bg-sf-500/10 dark:text-sf-200">
+                    All
+                  </button>
+                  <button type="button" onClick={handleClearEnvSelection} className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    Clear
+                  </button>
+                </div>
+
+                <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
+                  {envLoading ? (
+                    <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">Loading environments…</div>
+                  ) : envOptions.length === 0 ? (
+                    <div className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">No environments were found for the current org.</div>
+                  ) : (
+                    envOptions.map((env) => {
+                      const active = selectedEnvIds.includes(env.id);
+                      return (
+                        <button
+                          key={env.id}
+                          type="button"
+                          onClick={() => handleEnvToggle(env.id)}
+                          className={`flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left transition ${
+                            active ? 'bg-sf-50 text-sf-700 dark:bg-sf-500/10 dark:text-sf-200' : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800/80'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-medium">{env.name}</div>
+                            <div className="truncate text-[11px] text-gray-500 dark:text-gray-400">{env.bgName}</div>
+                          </div>
+                          {active ? <Check size={14} className="text-sf-600 dark:text-sf-400" /> : <span className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600" />}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
