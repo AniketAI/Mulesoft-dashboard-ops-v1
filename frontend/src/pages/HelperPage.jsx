@@ -1272,8 +1272,8 @@ const handleGetDetails = async () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {jobs.map((job) => (
-                  <tr key={job.id} className="align-top hover:bg-sf-50/40 dark:hover:bg-sf-500/5">
+                {jobs.map((job, index) => (
+                  <tr key={`${job.id || 'job'}-${index}`}className="align-top hover:bg-sf-50/40 dark:hover:bg-sf-500/5">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-gray-800 dark:text-gray-100">{job.jobName}</div>
                     </td>
