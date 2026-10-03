@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CalendarClock, Check, ChevronDown, Clock3, FileText, Layers3, PlayCircle, Search, Upload, Wrench } from 'lucide-react';
 import cronstrue from 'cronstrue';
 import api from '../services/api';
+import { getVisibleBgIds, getVisibleEnvIds } from '../utils/filterUtils';
 import { useAuth } from '../context/AuthContext';
 import { downloadCsv } from '../utils/appUtils';
 
@@ -306,28 +307,41 @@ function getGlobalSelectedEnvKeys() {
   try {
     const raw = sessionStorage.getItem('userSearch_selections');
 
+    console.log(
+      '[HelperPage] userSearch_selections:',
+      raw
+    );
+
     if (!raw) {
-      console.info('[HelperPage] No global environment selection found.');
+      console.warn(
+        '[HelperPage] No userSearch_selections found in sessionStorage.'
+      );
+
       return [];
     }
 
-    const value = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
 
-    if (!Array.isArray(value)) {
-      console.warn('[HelperPage] Global environment selection is not an array.');
+    console.log(
+      '[HelperPage] Parsed global environment selections:',
+      parsed
+    );
+
+    if (!Array.isArray(parsed)) {
+      console.warn(
+        '[HelperPage] userSearch_selections is not an array:',
+        parsed
+      );
+
       return [];
     }
 
-    const keys = value
+    return parsed
       .map((item) => String(item).trim())
       .filter(Boolean);
-
-    console.info('[HelperPage] Global selected environment keys:', keys);
-
-    return keys;
   } catch (error) {
-    console.warn(
-      '[HelperPage] Failed to read persisted global env selection:',
+    console.error(
+      '[HelperPage] Error reading global environment selections:',
       error
     );
 
@@ -614,242 +628,182 @@ export default function HelperPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-    useEffect(() => {
-    if (!orgId) return;
+  useEffect(() => {
+    if (!orgId) {
+      console.warn('[HelperPage] orgId is not available.');
+      return undefined;
+    }
 
     let isMounted = true;
 
     const loadEnvironmentOptions = async () => {
       setEnvLoading(true);
-      setError('');
 
       try {
-        console.info(
-          '[HelperPage] Loading environments selected in Global Search...'
-        );
-
         /*
-         * Global Search stores selections as:
+         * IMPORTANT:
          *
-         *     BUSINESS_GROUP_ID:ENVIRONMENT_ID
+         * The environment scope for the entire application is controlled
+         * by the Env selector in the TOP NAVBAR.
          *
-         * Example:
+         * It is stored by filterUtils as:
+         *   mulesoft_visible_bgs
+         *   mulesoft_visible_envs
          *
-         *     123:456
-         *     123:789
-         *
-         * We MUST preserve both IDs.
+         * This is NOT the Global Search page selection.
          */
-        const globalSelectionKeys = new Set(getGlobalSelectedEnvKeys());
+        const visibleBgIds = getVisibleBgIds();
+        const visibleEnvIds = getVisibleEnvIds();
 
-        console.info(
-          '[HelperPage] Global environment scope:',
-          [...globalSelectionKeys]
-        );
+        console.log('[HelperPage] Top-navbar BG filter:', [...visibleBgIds]);
+        console.log('[HelperPage] Top-navbar environment filter:', [...visibleEnvIds]);
 
-        /*
-         * No global selection means Helper should not search
-         * all environments.
-         */
-        if (globalSelectionKeys.size === 0) {
-          console.warn(
-            '[HelperPage] No environments selected in Global Search.'
-          );
-
-          if (isMounted) {
-            setEnvOptions([]);
-            setSelectedEnvIds([]);
-            setEnvLoading(false);
-          }
-
-          return;
-        }
-
-        const groupRes = await api.get('/organizations/business-groups');
-
+        const groupResponse = await api.get('/organizations/business-groups');
         const groups =
-          groupRes?.data?.data ||
-          groupRes?.data?.businessGroups ||
-          groupRes?.data ||
-          [];
+          groupResponse?.data?.data ||
+          groupResponse?.data?.businessGroups ||
+          (Array.isArray(groupResponse?.data) ? groupResponse.data : []);
 
-        console.info(
-          `[HelperPage] Business groups loaded: ${groups.length}`
+        if (!Array.isArray(groups)) {
+          throw new Error('Business Group API did not return an array.');
+        }
+
+        /*
+         * An empty BG filter means all BGs are globally visible.
+         * Otherwise only the BGs selected in the top navbar are visible.
+         */
+        const visibleGroups = visibleBgIds.size > 0
+          ? groups.filter((group) => {
+              const groupId =
+                group?.id ??
+                group?.orgId ??
+                group?.organizationId ??
+                group?.businessGroupId;
+              return groupId != null && visibleBgIds.has(String(groupId));
+            })
+          : groups;
+
+        console.log(
+          `[HelperPage] Top-navbar BG scope: ${visibleGroups.length}/${groups.length} Business Groups.`
         );
 
-        const envs = [];
+        const bgResults = await Promise.all(
+          visibleGroups.map(async (group) => {
+            const bgId =
+              group?.id ??
+              group?.orgId ??
+              group?.organizationId ??
+              group?.businessGroupId;
 
-        for (const group of groups) {
-          const groupId =
-            group.id ||
-            group.orgId ||
-            group.organizationId;
+            const bgName =
+              group?.name ??
+              group?.organizationName ??
+              group?.businessGroupName ??
+              `Business Group ${bgId}`;
 
-          if (!groupId) {
-            continue;
-          }
+            if (bgId == null) return [];
 
-          /*
-           * Only inspect environments that could possibly
-           * belong to the Global Search selection.
-           */
-          const groupSelectionKeys = [...globalSelectionKeys].filter(
-            (key) => key.startsWith(`${groupId}:`)
-          );
+            try {
+              const response = await api.get(`/environments/${bgId}`);
+              let environments =
+                response?.data?.data ||
+                response?.data?.environments ||
+                (Array.isArray(response?.data) ? response.data : []);
 
-          if (groupSelectionKeys.length === 0) {
-            continue;
-          }
-
-          try {
-            console.info(
-              `[HelperPage] Loading environments for selected BG: ${group.name || groupId}`
-            );
-
-            const envRes = await api.get(
-              `/environments/${groupId}`
-            );
-
-            const list =
-              envRes?.data?.data ||
-              envRes?.data?.environments ||
-              envRes?.data ||
-              [];
-
-            for (const env of list) {
-              const envId =
-                env.id ||
-                env.environmentId ||
-                env.envId;
-
-              if (!envId) {
-                continue;
+              if (!Array.isArray(environments) && environments && typeof environments === 'object') {
+                environments =
+                  environments.environments ||
+                  environments.items ||
+                  environments.data ||
+                  [];
               }
 
-              /*
-               * IMPORTANT:
-               *
-               * Environment identity is:
-               *
-               *     BG ID + ENV ID
-               *
-               * NOT ENV ID alone.
-               */
-              const selectionKey =
-                `${groupId}:${envId}`;
-
-              /*
-               * Only include environments explicitly
-               * selected in Global Search.
-               */
-              if (!globalSelectionKeys.has(selectionKey)) {
-                continue;
+              if (!Array.isArray(environments)) {
+                console.warn(
+                  `[HelperPage] Invalid environment response for BG ${bgId}:`,
+                  response?.data
+                );
+                return [];
               }
 
-              /*
-               * Avoid duplicate composite keys.
-               */
-              if (
-                envs.some(
-                  (item) => item.key === selectionKey
-                )
-              ) {
-                continue;
-              }
+              return environments
+                .map((environment) => {
+                  const envId =
+                    environment?.id ??
+                    environment?.environmentId ??
+                    environment?.envId;
 
-              envs.push({
-                id: envId,
+                  if (envId == null) return null;
 
-                /*
-                 * Composite key used internally by Helper.
-                 */
-                key: selectionKey,
+                  const envIdString = String(envId);
+                  const envName =
+                    environment?.name ??
+                    environment?.environmentName ??
+                    `Environment ${envIdString}`;
+                  const envType =
+                    environment?.type ??
+                    environment?.environmentType ??
+                    environment?.environment?.type ??
+                    'unknown';
 
-                name:
-                  env.name ||
-                  env.environmentName ||
-                  'Unnamed environment',
-
-                type:
-                  env.type ||
-                  env.environmentType ||
-                  'unknown',
-
-                bgId: groupId,
-
-                bgName:
-                  group.name ||
-                  group.organizationName ||
-                  'Business Group',
-              });
-
-              console.info(
-                '[HelperPage] Added selected environment:',
-                {
-                  key: selectionKey,
-                  bgId: groupId,
-                  bgName:
-                    group.name ||
-                    group.organizationName ||
-                    'Business Group',
-                  envId,
-                  envName:
-                    env.name ||
-                    env.environmentName ||
-                    'Unnamed environment',
-                  envType:
-                    env.type ||
-                    env.environmentType ||
-                    'unknown',
-                }
+                  return {
+                    id: envIdString,
+                    key: `${String(bgId)}:${envIdString}`,
+                    name: String(envName),
+                    type: String(envType),
+                    bgId: String(bgId),
+                    bgName: String(bgName),
+                  };
+                })
+                .filter(Boolean);
+            } catch (error) {
+              console.error(
+                `[HelperPage] Failed to load environments for BG ${bgId}:`,
+                error
               );
+              return [];
             }
-          } catch (envError) {
-            console.warn(
-              `[HelperPage] Failed to load environments for BG ${groupId}:`,
-              envError
-            );
-          }
-        }
+          })
+        );
+
+        const allEnvironmentOptions = bgResults.flat();
+
+        /*
+         * Empty mulesoft_visible_envs means "show all".
+         * Otherwise retain only environments selected in the TOP NAVBAR.
+         *
+         * No Production/Sandbox filtering is performed here.
+         */
+        const environmentOptions = visibleEnvIds.size > 0
+          ? allEnvironmentOptions.filter((environment) =>
+              visibleEnvIds.has(String(environment.id))
+            )
+          : allEnvironmentOptions;
 
         if (!isMounted) return;
 
-        console.info(
-          `[HelperPage] Final Helper environment scope: ${envs.length} environment(s)`
+        console.log(
+          `[HelperPage] Top-navbar environment scope: ${environmentOptions.length}/${allEnvironmentOptions.length} environments.`
+        );
+        console.log(
+          '[HelperPage] Helper available environments:',
+          environmentOptions
         );
 
-        setEnvOptions(envs);
+        setEnvOptions(environmentOptions);
 
         /*
-         * Select every environment that came from
-         * Global Search.
+         * IMPORTANT:
+         * These are AVAILABLE environments, not Helper selections.
+         * The user must explicitly select environments in Helper.
          */
-        setSelectedEnvIds(
-          envs.map((env) => env.key)
-        );
-
-        if (envs.length === 0) {
-          console.warn(
-            '[HelperPage] Global Search has selected environments, but none could be resolved.'
-          );
-
-          setError(
-            'The environments selected in Global Search could not be resolved.'
-          );
-        }
+        setSelectedEnvIds([]);
       } catch (error) {
-        console.error(
-          '[HelperPage] Failed to load environment list:',
-          error
-        );
+        console.error('[HelperPage] Failed to load top-navbar environments:', error);
 
         if (isMounted) {
           setEnvOptions([]);
           setSelectedEnvIds([]);
-
-          setError(
-            'Unable to load the environments selected in Global Search.'
-          );
         }
       } finally {
         if (isMounted) {
@@ -860,34 +814,63 @@ export default function HelperPage() {
 
     loadEnvironmentOptions();
 
+    /*
+     * Header filter modals dispatch these events after saving.
+     * Reload Helper's available environment list immediately when the
+     * global top-navbar scope changes.
+     */
+    const handleGlobalScopeChanged = () => {
+      console.log('[HelperPage] Top-navbar environment scope changed. Reloading...');
+      loadEnvironmentOptions();
+    };
+
+    window.addEventListener('bgFilterChanged', handleGlobalScopeChanged);
+    window.addEventListener('envFilterChanged', handleGlobalScopeChanged);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('bgFilterChanged', handleGlobalScopeChanged);
+      window.removeEventListener('envFilterChanged', handleGlobalScopeChanged);
     };
   }, [orgId]);
 
   const handleEnvToggle = (envKey) => {
-    setSelectedEnvIds((prev) => {
-      if (prev.includes(envKey)) {
-        return prev.filter((key) => key !== envKey);
-      }
+  setSelectedEnvIds((prev) => {
+    if (prev.includes(envKey)) {
+      return prev.filter(
+        (key) => key !== envKey
+      );
+    }
 
-      return [...prev, envKey];
-    });
-  };
+    return [
+      ...prev,
+      envKey,
+    ];
+  });
+};
 
   const handleSelectAllEnvs = () => {
-    setSelectedEnvIds(
-      envOptions.map((env) => env.key)
-    );
-  };
+  setSelectedEnvIds(
+    envOptions.map(
+      (env) => env.key
+    )
+  );
+};
 
   const handleClearEnvSelection = () => {
     setSelectedEnvIds([]);
   };
 
   const selectedEnvNames = envOptions
-    .filter((env) => selectedEnvIds.includes(env.key))
-    .map((env) => env.name);
+  .filter(
+    (env) =>
+      selectedEnvIds.includes(
+        env.key
+      )
+  )
+  .map(
+    (env) => env.name
+  );
 
   const selectedEnvSummary = selectedEnvNames.length === 0
     ? 'Select environment'
@@ -903,7 +886,7 @@ export default function HelperPage() {
 
     if (selectedEnvIds.length === 0) {
       setRows([]);
-      setError('Please select at least one environment before uploading the CSV.');
+      setError('Please select at least one environment from the Helper dropdown before uploading the CSV.');
       event.target.value = '';
       return;
     }
@@ -929,7 +912,7 @@ export default function HelperPage() {
 
     if (selectedEnvIds.length === 0) {
       setRows([]);
-      setError('No global environments are selected. Please choose the environments in Global Search first.');
+      setError('Please select at least one environment from the Helper dropdown.');
       return;
     }
 

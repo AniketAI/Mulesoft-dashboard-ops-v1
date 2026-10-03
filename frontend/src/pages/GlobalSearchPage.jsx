@@ -172,8 +172,35 @@ function BgEnvSelector({ businessGroups, onSelectionsChange }) {
   }, []);
 
   useEffect(() => {
-    try { sessionStorage.setItem('userSearch_selections', JSON.stringify([...selections])); } catch (e) {}
-  }, [selections]);
+  try {
+    const selectedKeys = [...selections];
+
+    console.log(
+      '[GlobalSearch] Persisting environment selections:',
+      selectedKeys
+    );
+
+    sessionStorage.setItem(
+      'userSearch_selections',
+      JSON.stringify(selectedKeys)
+    );
+
+    /*
+     * Also dispatch an event so components on the same page
+     * can react immediately if required.
+     */
+    window.dispatchEvent(
+      new CustomEvent('globalEnvironmentSelectionChanged', {
+        detail: selectedKeys,
+      })
+    );
+  } catch (error) {
+    console.error(
+      '[GlobalSearch] Failed to persist environment selections:',
+      error
+    );
+  }
+}, [selections]);
 
   useEffect(() => {
     const visible = applyBgFilter(businessGroups);
