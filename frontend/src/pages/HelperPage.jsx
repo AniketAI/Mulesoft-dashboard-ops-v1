@@ -469,89 +469,55 @@ async function fetchSchedulerRecordsForApp(app, orgId) {
   }
 }
 
-async function resolveJobsFromCsv(csvText, orgId, envIds = [], envLabels = []) {
+async function resolveJobsFromCsv(csvText, orgId, envKeys = [], envLabels = []) {
   const names = extractJobNames(csvText)
     .map((value) => value.trim())
     .filter(Boolean)
     .map((value) => value.replace(/\s+/g, ' '));
 
-  const activeEnvIds = Array.isArray(envIds) && envIds.length ? new Set(envIds) : null;
-  const envScopeLabel = Array.isArray(envLabels) && envLabels.length ? envLabels.join(', ') : 'Selected env scope';
+  const envScopeLabel = Array.isArray(envLabels) && envLabels.length
+    ? envLabels.join(', ')
+    : 'Selected env scope';
 
-  console.debug('[HelperPage] CSV names extracted:', names);
-  console.debug('[HelperPage] Selected env ids:', envIds);
+  console.info('[HelperPage] CSV job names:', names);
+  console.info('[HelperPage] Helper environment keys:', envKeys);
 
   if (!names.length) {
     const parsed = parseCsvJobs(csvText);
-    console.debug('[HelperPage] Parsed schedule rows:', parsed.length);
+    console.info('[HelperPage] No job-name column found; parsed rows:', parsed.length);
     return parsed.length ? parsed : [];
   }
 
-  try {
-    let groups = [];
-    try {
-      const groupRes = await api.get('/organizations/business-groups');
-      groups = groupRes?.data?.data || groupRes?.data?.businessGroups || groupRes?.data || [];
-    } catch (error) {
-      console.warn('[HelperPage] /organizations/business-groups fetch failed:', error);
-      groups = [];
-    }
+  /*
+   * Helper environment keys come from the top-navbar environment scope
+   * and have the form:
+   *
+   *     BG_ID:ENV_ID
+   *
+   * Do NOT compare these directly with a plain ENV_ID.
+   */
+  const selectedScopes = (Array.isArray(envKeys) ? envKeys : [])
+    .map((key) => String(key).trim())
+    .map((key) => {
+      const separator = key.indexOf(':');
+      if (separator <= 0) return null;
 
-    const apps = [];
-    for (const group of groups) {
-      const groupId = group.id || group.orgId || group.organizationId;
-      if (!groupId) continue;
-      try {
-        const appRes = await api.get(`/applications/summary/${groupId}`);
-        const list = appRes?.data?.data || appRes?.data?.applications || appRes?.data || [];
-        list.forEach((app) => {
-          const appEnvId = app?.environment?.id || app?.environmentId || app?.envId || app?.target?.environment?.id;
-          if (activeEnvIds && appEnvId && !activeEnvIds.has(appEnvId)) return;
-          if (activeEnvIds && !appEnvId) return;
-          apps.push({ ...app, _bgId: groupId, _envId: appEnvId || null });
-        });
-      } catch (error) {
-        console.warn(`[HelperPage] Failed to fetch apps for BG ${groupId}:`, error);
-      }
-    }
+      const bgId = key.slice(0, separator).trim();
+      const envId = key.slice(separator + 1).trim();
+      if (!bgId || !envId) return null;
 
-    if (!apps.length) {
-      console.warn('[HelperPage] No apps matched the selected environment scope, returning fallback rows.');
-      return names.map((name, index) => ({
-        id: `fallback-${index}`,
-        jobName: name,
-        appName: 'N/A',
-        environment: envScopeLabel,
-        cron: '',
-        decryptedCron: '',
-        startTime: null,
-        nextExecution: null,
-      }));
-    }
+      return {
+        key,
+        bgId,
+        envId,
+      };
+    })
+    .filter(Boolean);
 
-    const matched = [];
-    const normalizedNames = names.map((name) => normalizeName(name));
-
-    for (const app of apps) {
-      const schedulers = await fetchSchedulerRecordsForApp(app, orgId || app._bgId);
-      for (const scheduler of schedulers) {
-        const schedulerName = normalizeName(scheduler.jobName);
-        const isMatch = normalizedNames.some((name) => {
-          if (!name) return false;
-          return schedulerName === name || schedulerName.includes(name) || name.includes(schedulerName);
-        });
-        if (isMatch) matched.push({
-          ...scheduler,
-          environment: scheduler.environment || app.environment?.name || app.environment?.environmentName || envScopeLabel,
-        });
-      }
-    }
-
-    if (matched.length) return matched;
-
-    console.warn('[HelperPage] No scheduler matches found for uploaded names, returning fallback labels.');
+  if (!selectedScopes.length) {
+    console.warn('[HelperPage] No valid BG_ID:ENV_ID scopes were supplied.');
     return names.map((name, index) => ({
-      id: `fallback-${index}`,
+      id: `not-found-${index}`,
       jobName: name,
       appName: 'N/A',
       environment: envScopeLabel,
@@ -560,20 +526,247 @@ async function resolveJobsFromCsv(csvText, orgId, envIds = [], envLabels = []) {
       startTime: null,
       nextExecution: null,
     }));
-  } catch (error) {
-    console.warn('[HelperPage] resolveJobsFromCsv failed:', error);
-    const fallback = names.map((name, index) => ({
-      id: `fallback-${index}`,
-      jobName: name,
-      appName: 'N/A',
-      environment: envScopeLabel,
-      cron: '',
-      decryptedCron: '',
-      startTime: null,
-      nextExecution: null,
-    }));
-    return fallback.length ? fallback : parseCsvJobs(csvText);
   }
+
+  console.info('[HelperPage] Parsed Helper scopes:', selectedScopes);
+
+  const normalizeId = (value) => String(value ?? '').trim();
+
+  const fetchAppsForScope = async ({ bgId, envId }) => {
+    const apps = [];
+
+    /*
+     * Fetch CH2 and CH1 applications independently for the selected
+     * environment. One platform being unavailable must not prevent the
+     * other platform from being searched.
+     */
+    const [ch2Result, ch1Result] = await Promise.allSettled([
+      api.get(`/applications/cloudhub2/${bgId}/${envId}`, {
+        params: { limit: 500, offset: 0 },
+      }),
+      api.get(`/applications/cloudhub1/${envId}?orgId=${encodeURIComponent(bgId)}`),
+    ]);
+
+    if (ch2Result.status === 'fulfilled') {
+      const data = ch2Result.value?.data;
+      const list = Array.isArray(data)
+        ? data
+        : data?.items || data?.deployments || data?.content || data?.data || [];
+
+      if (Array.isArray(list)) {
+        for (const app of list) {
+          const appId = app?.id || app?.deploymentId;
+          if (!appId) continue;
+
+          apps.push({
+            ...app,
+            id: appId,
+            name: app?.name || app?.application?.name || appId,
+            deploymentType: 'CloudHub 2.0',
+            _bgId: bgId,
+            _envId: envId,
+            environment: {
+              ...(app?.environment || {}),
+              id: envId,
+            },
+          });
+        }
+      }
+    } else {
+      console.debug(
+        `[HelperPage] CH2 application lookup failed for BG ${bgId}, env ${envId}:`,
+        ch2Result.reason?.response?.status || ch2Result.reason?.message
+      );
+    }
+
+    if (ch1Result.status === 'fulfilled') {
+      const data = ch1Result.value?.data;
+      const list = Array.isArray(data)
+        ? data
+        : data?.applications || data?.data || [];
+
+      if (Array.isArray(list)) {
+        for (const app of list) {
+          const appName = app?.domain || app?.name;
+          if (!appName) continue;
+
+          apps.push({
+            ...app,
+            id: appName,
+            name: appName,
+            deploymentType: 'CloudHub 1.0',
+            _bgId: bgId,
+            _envId: envId,
+            environment: {
+              ...(app?.environment || {}),
+              id: envId,
+            },
+          });
+        }
+      }
+    } else {
+      console.debug(
+        `[HelperPage] CH1 application lookup failed for BG ${bgId}, env ${envId}:`,
+        ch1Result.reason?.response?.status || ch1Result.reason?.message
+      );
+    }
+
+    return apps;
+  };
+
+  /*
+   * Avoid browser fan-out exploding when many environments are selected.
+   * Four environment lookups run at a time.
+   */
+  const environmentApps = [];
+  const environmentConcurrency = 4;
+  let nextScopeIndex = 0;
+
+  const scopeWorker = async () => {
+    while (nextScopeIndex < selectedScopes.length) {
+      const index = nextScopeIndex++;
+      const scope = selectedScopes[index];
+
+      try {
+        console.info(
+          `[HelperPage] Loading applications for ${scope.key} (${index + 1}/${selectedScopes.length})`
+        );
+
+        const apps = await fetchAppsForScope(scope);
+        environmentApps.push(...apps);
+
+        console.info(
+          `[HelperPage] ${scope.key}: ${apps.length} applications found.`
+        );
+      } catch (error) {
+        console.warn(
+          `[HelperPage] Application lookup failed for ${scope.key}:`,
+          error
+        );
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(environmentConcurrency, selectedScopes.length) },
+      () => scopeWorker()
+    )
+  );
+
+  /*
+   * Deduplicate applications in case an API returns the same application
+   * more than once.
+   */
+  const uniqueApps = [];
+  const seenApps = new Set();
+
+  for (const app of environmentApps) {
+    const key = `${app._bgId}:${app._envId}:${app.deploymentType}:${app.id}`;
+    if (seenApps.has(key)) continue;
+    seenApps.add(key);
+    uniqueApps.push(app);
+  }
+
+  console.info(
+    `[HelperPage] Total applications in selected environment scope: ${uniqueApps.length}`
+  );
+
+  if (!uniqueApps.length) {
+    return names.map((name, index) => ({
+      id: `not-found-${index}`,
+      jobName: name,
+      appName: 'N/A',
+      environment: envScopeLabel,
+      cron: '',
+      decryptedCron: '',
+      startTime: null,
+      nextExecution: null,
+    }));
+  }
+
+  const normalizedNames = names.map((name) => normalizeName(name));
+  const matched = [];
+
+  /*
+   * Scheduler calls are also bounded. This is still temporary frontend
+   * orchestration; the next step will move this whole operation to the
+   * backend Helper API.
+   */
+  const appConcurrency = 4;
+  let nextAppIndex = 0;
+
+  const appWorker = async () => {
+    while (nextAppIndex < uniqueApps.length) {
+      const index = nextAppIndex++;
+      const app = uniqueApps[index];
+
+      try {
+        const schedulers = await fetchSchedulerRecordsForApp(
+          app,
+          app._bgId || orgId
+        );
+
+        for (const scheduler of schedulers) {
+          const schedulerName = normalizeName(scheduler.jobName);
+
+          const isMatch = normalizedNames.some((name) => {
+            if (!name || !schedulerName) return false;
+            return (
+              schedulerName === name ||
+              schedulerName.includes(name) ||
+              name.includes(schedulerName)
+            );
+          });
+
+          if (isMatch) {
+            matched.push({
+              ...scheduler,
+              environment:
+                scheduler.environment ||
+                app.environment?.name ||
+                app.environment?.environmentName ||
+                envScopeLabel,
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(
+          `[HelperPage] Scheduler lookup failed for ${app.name || app.id}:`,
+          error
+        );
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(appConcurrency, uniqueApps.length) },
+      () => appWorker()
+    )
+  );
+
+  console.info(
+    `[HelperPage] Scheduler matching complete. Matches: ${matched.length}`
+  );
+
+  if (matched.length) return matched;
+
+  /*
+   * Keep the requested CSV jobs visible when no live scheduler matched.
+   * These are explicitly marked as not found rather than pretending they
+   * came from Anypoint.
+   */
+  return names.map((name, index) => ({
+    id: `not-found-${index}`,
+    jobName: name,
+    appName: 'Not found',
+    environment: envScopeLabel,
+    cron: '',
+    decryptedCron: '',
+    startTime: null,
+    nextExecution: null,
+  }));
 }
 
 export default function HelperPage() {
