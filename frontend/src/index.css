@@ -1,0 +1,1595 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-sf-50 text-gray-900 font-sans transition-colors duration-150;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .dark body {
+    @apply bg-gray-950 text-gray-100;
+  }
+  code, kbd, pre, .font-mono {
+    font-feature-settings: 'liga' 1, 'calt' 1;
+  }
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background-color: rgb(17 24 39);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgb(55 65 81);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Dark mode retrofit layer
+ *
+ * The app was built with hardcoded light-theme Tailwind utility classes
+ * (bg-white, text-gray-900, border-gray-200, etc.) scattered across every
+ * page and component — there was no CSS-variable or dark: variant usage.
+ *
+ * Rather than touching every file, this block defines plain CSS rules that
+ * target those exact utility class names and override them only when an
+ * ancestor has the `dark` class (toggled by ThemeContext). Because a rule
+ * like `.dark .bg-white` has higher specificity than Tailwind's own
+ * `.bg-white`, it wins whenever dark mode is active, with zero JSX changes
+ * required. Components that already have explicit dark: classes (added
+ * incrementally over time) simply take precedence as normal.
+ * ───────────────────────────────────────────────────────────────────────── */
+/* ===== Auto-generated dark-mode overrides for pervasive literal Tailwind classes ===== */
+/* Retrofits dark mode onto existing hardcoded light-theme utility classes without editing every component. */
+.dark .bg-white { background-color: rgb(31 41 55); }
+.dark .border-white { border-color: rgb(31 41 55); }
+.dark .bg-white\/5 { background-color: rgb(31 41 55 / 0.05); }
+.dark .border-white\/5 { border-color: rgb(31 41 55 / 0.05); }
+.dark .bg-white\/10 { background-color: rgb(31 41 55 / 0.10); }
+.dark .border-white\/10 { border-color: rgb(31 41 55 / 0.10); }
+.dark .bg-white\/15 { background-color: rgb(31 41 55 / 0.15); }
+.dark .border-white\/15 { border-color: rgb(31 41 55 / 0.15); }
+.dark .bg-white\/20 { background-color: rgb(31 41 55 / 0.20); }
+.dark .border-white\/20 { border-color: rgb(31 41 55 / 0.20); }
+.dark .bg-white\/25 { background-color: rgb(31 41 55 / 0.25); }
+.dark .border-white\/25 { border-color: rgb(31 41 55 / 0.25); }
+.dark .bg-white\/30 { background-color: rgb(31 41 55 / 0.30); }
+.dark .border-white\/30 { border-color: rgb(31 41 55 / 0.30); }
+.dark .bg-white\/35 { background-color: rgb(31 41 55 / 0.35); }
+.dark .border-white\/35 { border-color: rgb(31 41 55 / 0.35); }
+.dark .bg-white\/40 { background-color: rgb(31 41 55 / 0.40); }
+.dark .border-white\/40 { border-color: rgb(31 41 55 / 0.40); }
+.dark .bg-white\/45 { background-color: rgb(31 41 55 / 0.45); }
+.dark .border-white\/45 { border-color: rgb(31 41 55 / 0.45); }
+.dark .bg-white\/50 { background-color: rgb(31 41 55 / 0.50); }
+.dark .border-white\/50 { border-color: rgb(31 41 55 / 0.50); }
+.dark .bg-white\/55 { background-color: rgb(31 41 55 / 0.55); }
+.dark .border-white\/55 { border-color: rgb(31 41 55 / 0.55); }
+.dark .bg-white\/60 { background-color: rgb(31 41 55 / 0.60); }
+.dark .border-white\/60 { border-color: rgb(31 41 55 / 0.60); }
+.dark .bg-white\/65 { background-color: rgb(31 41 55 / 0.65); }
+.dark .border-white\/65 { border-color: rgb(31 41 55 / 0.65); }
+.dark .bg-white\/70 { background-color: rgb(31 41 55 / 0.70); }
+.dark .border-white\/70 { border-color: rgb(31 41 55 / 0.70); }
+.dark .bg-white\/75 { background-color: rgb(31 41 55 / 0.75); }
+.dark .border-white\/75 { border-color: rgb(31 41 55 / 0.75); }
+.dark .bg-white\/80 { background-color: rgb(31 41 55 / 0.80); }
+.dark .border-white\/80 { border-color: rgb(31 41 55 / 0.80); }
+.dark .bg-white\/85 { background-color: rgb(31 41 55 / 0.85); }
+.dark .border-white\/85 { border-color: rgb(31 41 55 / 0.85); }
+.dark .bg-white\/90 { background-color: rgb(31 41 55 / 0.90); }
+.dark .border-white\/90 { border-color: rgb(31 41 55 / 0.90); }
+.dark .bg-white\/95 { background-color: rgb(31 41 55 / 0.95); }
+.dark .border-white\/95 { border-color: rgb(31 41 55 / 0.95); }
+.dark .hover\:bg-white:hover { background-color: rgb(31 41 55); }
+.dark .hover\:border-white:hover { border-color: rgb(31 41 55); }
+.dark .hover\:bg-white\/5:hover { background-color: rgb(31 41 55 / 0.05); }
+.dark .hover\:border-white\/5:hover { border-color: rgb(31 41 55 / 0.05); }
+.dark .hover\:bg-white\/10:hover { background-color: rgb(31 41 55 / 0.10); }
+.dark .hover\:border-white\/10:hover { border-color: rgb(31 41 55 / 0.10); }
+.dark .hover\:bg-white\/15:hover { background-color: rgb(31 41 55 / 0.15); }
+.dark .hover\:border-white\/15:hover { border-color: rgb(31 41 55 / 0.15); }
+.dark .hover\:bg-white\/20:hover { background-color: rgb(31 41 55 / 0.20); }
+.dark .hover\:border-white\/20:hover { border-color: rgb(31 41 55 / 0.20); }
+.dark .hover\:bg-white\/25:hover { background-color: rgb(31 41 55 / 0.25); }
+.dark .hover\:border-white\/25:hover { border-color: rgb(31 41 55 / 0.25); }
+.dark .hover\:bg-white\/30:hover { background-color: rgb(31 41 55 / 0.30); }
+.dark .hover\:border-white\/30:hover { border-color: rgb(31 41 55 / 0.30); }
+.dark .hover\:bg-white\/35:hover { background-color: rgb(31 41 55 / 0.35); }
+.dark .hover\:border-white\/35:hover { border-color: rgb(31 41 55 / 0.35); }
+.dark .hover\:bg-white\/40:hover { background-color: rgb(31 41 55 / 0.40); }
+.dark .hover\:border-white\/40:hover { border-color: rgb(31 41 55 / 0.40); }
+.dark .hover\:bg-white\/45:hover { background-color: rgb(31 41 55 / 0.45); }
+.dark .hover\:border-white\/45:hover { border-color: rgb(31 41 55 / 0.45); }
+.dark .hover\:bg-white\/50:hover { background-color: rgb(31 41 55 / 0.50); }
+.dark .hover\:border-white\/50:hover { border-color: rgb(31 41 55 / 0.50); }
+.dark .hover\:bg-white\/55:hover { background-color: rgb(31 41 55 / 0.55); }
+.dark .hover\:border-white\/55:hover { border-color: rgb(31 41 55 / 0.55); }
+.dark .hover\:bg-white\/60:hover { background-color: rgb(31 41 55 / 0.60); }
+.dark .hover\:border-white\/60:hover { border-color: rgb(31 41 55 / 0.60); }
+.dark .hover\:bg-white\/65:hover { background-color: rgb(31 41 55 / 0.65); }
+.dark .hover\:border-white\/65:hover { border-color: rgb(31 41 55 / 0.65); }
+.dark .hover\:bg-white\/70:hover { background-color: rgb(31 41 55 / 0.70); }
+.dark .hover\:border-white\/70:hover { border-color: rgb(31 41 55 / 0.70); }
+.dark .hover\:bg-white\/75:hover { background-color: rgb(31 41 55 / 0.75); }
+.dark .hover\:border-white\/75:hover { border-color: rgb(31 41 55 / 0.75); }
+.dark .hover\:bg-white\/80:hover { background-color: rgb(31 41 55 / 0.80); }
+.dark .hover\:border-white\/80:hover { border-color: rgb(31 41 55 / 0.80); }
+.dark .hover\:bg-white\/85:hover { background-color: rgb(31 41 55 / 0.85); }
+.dark .hover\:border-white\/85:hover { border-color: rgb(31 41 55 / 0.85); }
+.dark .hover\:bg-white\/90:hover { background-color: rgb(31 41 55 / 0.90); }
+.dark .hover\:border-white\/90:hover { border-color: rgb(31 41 55 / 0.90); }
+.dark .hover\:bg-white\/95:hover { background-color: rgb(31 41 55 / 0.95); }
+.dark .hover\:border-white\/95:hover { border-color: rgb(31 41 55 / 0.95); }
+.dark .focus\:bg-white:focus { background-color: rgb(31 41 55); }
+.dark .focus\:border-white:focus { border-color: rgb(31 41 55); }
+.dark .focus\:bg-white\/5:focus { background-color: rgb(31 41 55 / 0.05); }
+.dark .focus\:border-white\/5:focus { border-color: rgb(31 41 55 / 0.05); }
+.dark .focus\:bg-white\/10:focus { background-color: rgb(31 41 55 / 0.10); }
+.dark .focus\:border-white\/10:focus { border-color: rgb(31 41 55 / 0.10); }
+.dark .focus\:bg-white\/15:focus { background-color: rgb(31 41 55 / 0.15); }
+.dark .focus\:border-white\/15:focus { border-color: rgb(31 41 55 / 0.15); }
+.dark .focus\:bg-white\/20:focus { background-color: rgb(31 41 55 / 0.20); }
+.dark .focus\:border-white\/20:focus { border-color: rgb(31 41 55 / 0.20); }
+.dark .focus\:bg-white\/25:focus { background-color: rgb(31 41 55 / 0.25); }
+.dark .focus\:border-white\/25:focus { border-color: rgb(31 41 55 / 0.25); }
+.dark .focus\:bg-white\/30:focus { background-color: rgb(31 41 55 / 0.30); }
+.dark .focus\:border-white\/30:focus { border-color: rgb(31 41 55 / 0.30); }
+.dark .focus\:bg-white\/35:focus { background-color: rgb(31 41 55 / 0.35); }
+.dark .focus\:border-white\/35:focus { border-color: rgb(31 41 55 / 0.35); }
+.dark .focus\:bg-white\/40:focus { background-color: rgb(31 41 55 / 0.40); }
+.dark .focus\:border-white\/40:focus { border-color: rgb(31 41 55 / 0.40); }
+.dark .focus\:bg-white\/45:focus { background-color: rgb(31 41 55 / 0.45); }
+.dark .focus\:border-white\/45:focus { border-color: rgb(31 41 55 / 0.45); }
+.dark .focus\:bg-white\/50:focus { background-color: rgb(31 41 55 / 0.50); }
+.dark .focus\:border-white\/50:focus { border-color: rgb(31 41 55 / 0.50); }
+.dark .focus\:bg-white\/55:focus { background-color: rgb(31 41 55 / 0.55); }
+.dark .focus\:border-white\/55:focus { border-color: rgb(31 41 55 / 0.55); }
+.dark .focus\:bg-white\/60:focus { background-color: rgb(31 41 55 / 0.60); }
+.dark .focus\:border-white\/60:focus { border-color: rgb(31 41 55 / 0.60); }
+.dark .focus\:bg-white\/65:focus { background-color: rgb(31 41 55 / 0.65); }
+.dark .focus\:border-white\/65:focus { border-color: rgb(31 41 55 / 0.65); }
+.dark .focus\:bg-white\/70:focus { background-color: rgb(31 41 55 / 0.70); }
+.dark .focus\:border-white\/70:focus { border-color: rgb(31 41 55 / 0.70); }
+.dark .focus\:bg-white\/75:focus { background-color: rgb(31 41 55 / 0.75); }
+.dark .focus\:border-white\/75:focus { border-color: rgb(31 41 55 / 0.75); }
+.dark .focus\:bg-white\/80:focus { background-color: rgb(31 41 55 / 0.80); }
+.dark .focus\:border-white\/80:focus { border-color: rgb(31 41 55 / 0.80); }
+.dark .focus\:bg-white\/85:focus { background-color: rgb(31 41 55 / 0.85); }
+.dark .focus\:border-white\/85:focus { border-color: rgb(31 41 55 / 0.85); }
+.dark .focus\:bg-white\/90:focus { background-color: rgb(31 41 55 / 0.90); }
+.dark .focus\:border-white\/90:focus { border-color: rgb(31 41 55 / 0.90); }
+.dark .focus\:bg-white\/95:focus { background-color: rgb(31 41 55 / 0.95); }
+.dark .focus\:border-white\/95:focus { border-color: rgb(31 41 55 / 0.95); }
+.dark .group:hover .group-hover\:bg-white { background-color: rgb(31 41 55); }
+.dark .group:hover .group-hover\:border-white { border-color: rgb(31 41 55); }
+.dark .group:hover .group-hover\:bg-white\/5 { background-color: rgb(31 41 55 / 0.05); }
+.dark .group:hover .group-hover\:border-white\/5 { border-color: rgb(31 41 55 / 0.05); }
+.dark .group:hover .group-hover\:bg-white\/10 { background-color: rgb(31 41 55 / 0.10); }
+.dark .group:hover .group-hover\:border-white\/10 { border-color: rgb(31 41 55 / 0.10); }
+.dark .group:hover .group-hover\:bg-white\/15 { background-color: rgb(31 41 55 / 0.15); }
+.dark .group:hover .group-hover\:border-white\/15 { border-color: rgb(31 41 55 / 0.15); }
+.dark .group:hover .group-hover\:bg-white\/20 { background-color: rgb(31 41 55 / 0.20); }
+.dark .group:hover .group-hover\:border-white\/20 { border-color: rgb(31 41 55 / 0.20); }
+.dark .group:hover .group-hover\:bg-white\/25 { background-color: rgb(31 41 55 / 0.25); }
+.dark .group:hover .group-hover\:border-white\/25 { border-color: rgb(31 41 55 / 0.25); }
+.dark .group:hover .group-hover\:bg-white\/30 { background-color: rgb(31 41 55 / 0.30); }
+.dark .group:hover .group-hover\:border-white\/30 { border-color: rgb(31 41 55 / 0.30); }
+.dark .group:hover .group-hover\:bg-white\/35 { background-color: rgb(31 41 55 / 0.35); }
+.dark .group:hover .group-hover\:border-white\/35 { border-color: rgb(31 41 55 / 0.35); }
+.dark .group:hover .group-hover\:bg-white\/40 { background-color: rgb(31 41 55 / 0.40); }
+.dark .group:hover .group-hover\:border-white\/40 { border-color: rgb(31 41 55 / 0.40); }
+.dark .group:hover .group-hover\:bg-white\/45 { background-color: rgb(31 41 55 / 0.45); }
+.dark .group:hover .group-hover\:border-white\/45 { border-color: rgb(31 41 55 / 0.45); }
+.dark .group:hover .group-hover\:bg-white\/50 { background-color: rgb(31 41 55 / 0.50); }
+.dark .group:hover .group-hover\:border-white\/50 { border-color: rgb(31 41 55 / 0.50); }
+.dark .group:hover .group-hover\:bg-white\/55 { background-color: rgb(31 41 55 / 0.55); }
+.dark .group:hover .group-hover\:border-white\/55 { border-color: rgb(31 41 55 / 0.55); }
+.dark .group:hover .group-hover\:bg-white\/60 { background-color: rgb(31 41 55 / 0.60); }
+.dark .group:hover .group-hover\:border-white\/60 { border-color: rgb(31 41 55 / 0.60); }
+.dark .group:hover .group-hover\:bg-white\/65 { background-color: rgb(31 41 55 / 0.65); }
+.dark .group:hover .group-hover\:border-white\/65 { border-color: rgb(31 41 55 / 0.65); }
+.dark .group:hover .group-hover\:bg-white\/70 { background-color: rgb(31 41 55 / 0.70); }
+.dark .group:hover .group-hover\:border-white\/70 { border-color: rgb(31 41 55 / 0.70); }
+.dark .group:hover .group-hover\:bg-white\/75 { background-color: rgb(31 41 55 / 0.75); }
+.dark .group:hover .group-hover\:border-white\/75 { border-color: rgb(31 41 55 / 0.75); }
+.dark .group:hover .group-hover\:bg-white\/80 { background-color: rgb(31 41 55 / 0.80); }
+.dark .group:hover .group-hover\:border-white\/80 { border-color: rgb(31 41 55 / 0.80); }
+.dark .group:hover .group-hover\:bg-white\/85 { background-color: rgb(31 41 55 / 0.85); }
+.dark .group:hover .group-hover\:border-white\/85 { border-color: rgb(31 41 55 / 0.85); }
+.dark .group:hover .group-hover\:bg-white\/90 { background-color: rgb(31 41 55 / 0.90); }
+.dark .group:hover .group-hover\:border-white\/90 { border-color: rgb(31 41 55 / 0.90); }
+.dark .group:hover .group-hover\:bg-white\/95 { background-color: rgb(31 41 55 / 0.95); }
+.dark .group:hover .group-hover\:border-white\/95 { border-color: rgb(31 41 55 / 0.95); }
+.dark .divide-white > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55); }
+.dark .divide-white\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.05); }
+.dark .divide-white\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.10); }
+.dark .divide-white\/15 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.15); }
+.dark .divide-white\/20 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.20); }
+.dark .divide-white\/25 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.25); }
+.dark .divide-white\/30 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.30); }
+.dark .divide-white\/35 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.35); }
+.dark .divide-white\/40 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.40); }
+.dark .divide-white\/45 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.45); }
+.dark .divide-white\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.50); }
+.dark .divide-white\/55 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.55); }
+.dark .divide-white\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.60); }
+.dark .divide-white\/65 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.65); }
+.dark .divide-white\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.70); }
+.dark .divide-white\/75 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.75); }
+.dark .divide-white\/80 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.80); }
+.dark .divide-white\/85 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.85); }
+.dark .divide-white\/90 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.90); }
+.dark .divide-white\/95 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.95); }
+.dark .bg-gray-50 { background-color: rgb(3 7 18); }
+.dark .border-gray-50 { border-color: rgb(3 7 18); }
+.dark .bg-gray-50\/5 { background-color: rgb(3 7 18 / 0.05); }
+.dark .border-gray-50\/5 { border-color: rgb(3 7 18 / 0.05); }
+.dark .bg-gray-50\/10 { background-color: rgb(3 7 18 / 0.10); }
+.dark .border-gray-50\/10 { border-color: rgb(3 7 18 / 0.10); }
+.dark .bg-gray-50\/15 { background-color: rgb(3 7 18 / 0.15); }
+.dark .border-gray-50\/15 { border-color: rgb(3 7 18 / 0.15); }
+.dark .bg-gray-50\/20 { background-color: rgb(3 7 18 / 0.20); }
+.dark .border-gray-50\/20 { border-color: rgb(3 7 18 / 0.20); }
+.dark .bg-gray-50\/25 { background-color: rgb(3 7 18 / 0.25); }
+.dark .border-gray-50\/25 { border-color: rgb(3 7 18 / 0.25); }
+.dark .bg-gray-50\/30 { background-color: rgb(3 7 18 / 0.30); }
+.dark .border-gray-50\/30 { border-color: rgb(3 7 18 / 0.30); }
+.dark .bg-gray-50\/35 { background-color: rgb(3 7 18 / 0.35); }
+.dark .border-gray-50\/35 { border-color: rgb(3 7 18 / 0.35); }
+.dark .bg-gray-50\/40 { background-color: rgb(3 7 18 / 0.40); }
+.dark .border-gray-50\/40 { border-color: rgb(3 7 18 / 0.40); }
+.dark .bg-gray-50\/45 { background-color: rgb(3 7 18 / 0.45); }
+.dark .border-gray-50\/45 { border-color: rgb(3 7 18 / 0.45); }
+.dark .bg-gray-50\/50 { background-color: rgb(3 7 18 / 0.50); }
+.dark .border-gray-50\/50 { border-color: rgb(3 7 18 / 0.50); }
+.dark .bg-gray-50\/55 { background-color: rgb(3 7 18 / 0.55); }
+.dark .border-gray-50\/55 { border-color: rgb(3 7 18 / 0.55); }
+.dark .bg-gray-50\/60 { background-color: rgb(3 7 18 / 0.60); }
+.dark .border-gray-50\/60 { border-color: rgb(3 7 18 / 0.60); }
+.dark .bg-gray-50\/65 { background-color: rgb(3 7 18 / 0.65); }
+.dark .border-gray-50\/65 { border-color: rgb(3 7 18 / 0.65); }
+.dark .bg-gray-50\/70 { background-color: rgb(3 7 18 / 0.70); }
+.dark .border-gray-50\/70 { border-color: rgb(3 7 18 / 0.70); }
+.dark .bg-gray-50\/75 { background-color: rgb(3 7 18 / 0.75); }
+.dark .border-gray-50\/75 { border-color: rgb(3 7 18 / 0.75); }
+.dark .bg-gray-50\/80 { background-color: rgb(3 7 18 / 0.80); }
+.dark .border-gray-50\/80 { border-color: rgb(3 7 18 / 0.80); }
+.dark .bg-gray-50\/85 { background-color: rgb(3 7 18 / 0.85); }
+.dark .border-gray-50\/85 { border-color: rgb(3 7 18 / 0.85); }
+.dark .bg-gray-50\/90 { background-color: rgb(3 7 18 / 0.90); }
+.dark .border-gray-50\/90 { border-color: rgb(3 7 18 / 0.90); }
+.dark .bg-gray-50\/95 { background-color: rgb(3 7 18 / 0.95); }
+.dark .border-gray-50\/95 { border-color: rgb(3 7 18 / 0.95); }
+.dark .hover\:bg-gray-50:hover { background-color: rgb(3 7 18); }
+.dark .hover\:border-gray-50:hover { border-color: rgb(3 7 18); }
+.dark .hover\:bg-gray-50\/5:hover { background-color: rgb(3 7 18 / 0.05); }
+.dark .hover\:border-gray-50\/5:hover { border-color: rgb(3 7 18 / 0.05); }
+.dark .hover\:bg-gray-50\/10:hover { background-color: rgb(3 7 18 / 0.10); }
+.dark .hover\:border-gray-50\/10:hover { border-color: rgb(3 7 18 / 0.10); }
+.dark .hover\:bg-gray-50\/15:hover { background-color: rgb(3 7 18 / 0.15); }
+.dark .hover\:border-gray-50\/15:hover { border-color: rgb(3 7 18 / 0.15); }
+.dark .hover\:bg-gray-50\/20:hover { background-color: rgb(3 7 18 / 0.20); }
+.dark .hover\:border-gray-50\/20:hover { border-color: rgb(3 7 18 / 0.20); }
+.dark .hover\:bg-gray-50\/25:hover { background-color: rgb(3 7 18 / 0.25); }
+.dark .hover\:border-gray-50\/25:hover { border-color: rgb(3 7 18 / 0.25); }
+.dark .hover\:bg-gray-50\/30:hover { background-color: rgb(3 7 18 / 0.30); }
+.dark .hover\:border-gray-50\/30:hover { border-color: rgb(3 7 18 / 0.30); }
+.dark .hover\:bg-gray-50\/35:hover { background-color: rgb(3 7 18 / 0.35); }
+.dark .hover\:border-gray-50\/35:hover { border-color: rgb(3 7 18 / 0.35); }
+.dark .hover\:bg-gray-50\/40:hover { background-color: rgb(3 7 18 / 0.40); }
+.dark .hover\:border-gray-50\/40:hover { border-color: rgb(3 7 18 / 0.40); }
+.dark .hover\:bg-gray-50\/45:hover { background-color: rgb(3 7 18 / 0.45); }
+.dark .hover\:border-gray-50\/45:hover { border-color: rgb(3 7 18 / 0.45); }
+.dark .hover\:bg-gray-50\/50:hover { background-color: rgb(3 7 18 / 0.50); }
+.dark .hover\:border-gray-50\/50:hover { border-color: rgb(3 7 18 / 0.50); }
+.dark .hover\:bg-gray-50\/55:hover { background-color: rgb(3 7 18 / 0.55); }
+.dark .hover\:border-gray-50\/55:hover { border-color: rgb(3 7 18 / 0.55); }
+.dark .hover\:bg-gray-50\/60:hover { background-color: rgb(3 7 18 / 0.60); }
+.dark .hover\:border-gray-50\/60:hover { border-color: rgb(3 7 18 / 0.60); }
+.dark .hover\:bg-gray-50\/65:hover { background-color: rgb(3 7 18 / 0.65); }
+.dark .hover\:border-gray-50\/65:hover { border-color: rgb(3 7 18 / 0.65); }
+.dark .hover\:bg-gray-50\/70:hover { background-color: rgb(3 7 18 / 0.70); }
+.dark .hover\:border-gray-50\/70:hover { border-color: rgb(3 7 18 / 0.70); }
+.dark .hover\:bg-gray-50\/75:hover { background-color: rgb(3 7 18 / 0.75); }
+.dark .hover\:border-gray-50\/75:hover { border-color: rgb(3 7 18 / 0.75); }
+.dark .hover\:bg-gray-50\/80:hover { background-color: rgb(3 7 18 / 0.80); }
+.dark .hover\:border-gray-50\/80:hover { border-color: rgb(3 7 18 / 0.80); }
+.dark .hover\:bg-gray-50\/85:hover { background-color: rgb(3 7 18 / 0.85); }
+.dark .hover\:border-gray-50\/85:hover { border-color: rgb(3 7 18 / 0.85); }
+.dark .hover\:bg-gray-50\/90:hover { background-color: rgb(3 7 18 / 0.90); }
+.dark .hover\:border-gray-50\/90:hover { border-color: rgb(3 7 18 / 0.90); }
+.dark .hover\:bg-gray-50\/95:hover { background-color: rgb(3 7 18 / 0.95); }
+.dark .hover\:border-gray-50\/95:hover { border-color: rgb(3 7 18 / 0.95); }
+.dark .focus\:bg-gray-50:focus { background-color: rgb(3 7 18); }
+.dark .focus\:border-gray-50:focus { border-color: rgb(3 7 18); }
+.dark .focus\:bg-gray-50\/5:focus { background-color: rgb(3 7 18 / 0.05); }
+.dark .focus\:border-gray-50\/5:focus { border-color: rgb(3 7 18 / 0.05); }
+.dark .focus\:bg-gray-50\/10:focus { background-color: rgb(3 7 18 / 0.10); }
+.dark .focus\:border-gray-50\/10:focus { border-color: rgb(3 7 18 / 0.10); }
+.dark .focus\:bg-gray-50\/15:focus { background-color: rgb(3 7 18 / 0.15); }
+.dark .focus\:border-gray-50\/15:focus { border-color: rgb(3 7 18 / 0.15); }
+.dark .focus\:bg-gray-50\/20:focus { background-color: rgb(3 7 18 / 0.20); }
+.dark .focus\:border-gray-50\/20:focus { border-color: rgb(3 7 18 / 0.20); }
+.dark .focus\:bg-gray-50\/25:focus { background-color: rgb(3 7 18 / 0.25); }
+.dark .focus\:border-gray-50\/25:focus { border-color: rgb(3 7 18 / 0.25); }
+.dark .focus\:bg-gray-50\/30:focus { background-color: rgb(3 7 18 / 0.30); }
+.dark .focus\:border-gray-50\/30:focus { border-color: rgb(3 7 18 / 0.30); }
+.dark .focus\:bg-gray-50\/35:focus { background-color: rgb(3 7 18 / 0.35); }
+.dark .focus\:border-gray-50\/35:focus { border-color: rgb(3 7 18 / 0.35); }
+.dark .focus\:bg-gray-50\/40:focus { background-color: rgb(3 7 18 / 0.40); }
+.dark .focus\:border-gray-50\/40:focus { border-color: rgb(3 7 18 / 0.40); }
+.dark .focus\:bg-gray-50\/45:focus { background-color: rgb(3 7 18 / 0.45); }
+.dark .focus\:border-gray-50\/45:focus { border-color: rgb(3 7 18 / 0.45); }
+.dark .focus\:bg-gray-50\/50:focus { background-color: rgb(3 7 18 / 0.50); }
+.dark .focus\:border-gray-50\/50:focus { border-color: rgb(3 7 18 / 0.50); }
+.dark .focus\:bg-gray-50\/55:focus { background-color: rgb(3 7 18 / 0.55); }
+.dark .focus\:border-gray-50\/55:focus { border-color: rgb(3 7 18 / 0.55); }
+.dark .focus\:bg-gray-50\/60:focus { background-color: rgb(3 7 18 / 0.60); }
+.dark .focus\:border-gray-50\/60:focus { border-color: rgb(3 7 18 / 0.60); }
+.dark .focus\:bg-gray-50\/65:focus { background-color: rgb(3 7 18 / 0.65); }
+.dark .focus\:border-gray-50\/65:focus { border-color: rgb(3 7 18 / 0.65); }
+.dark .focus\:bg-gray-50\/70:focus { background-color: rgb(3 7 18 / 0.70); }
+.dark .focus\:border-gray-50\/70:focus { border-color: rgb(3 7 18 / 0.70); }
+.dark .focus\:bg-gray-50\/75:focus { background-color: rgb(3 7 18 / 0.75); }
+.dark .focus\:border-gray-50\/75:focus { border-color: rgb(3 7 18 / 0.75); }
+.dark .focus\:bg-gray-50\/80:focus { background-color: rgb(3 7 18 / 0.80); }
+.dark .focus\:border-gray-50\/80:focus { border-color: rgb(3 7 18 / 0.80); }
+.dark .focus\:bg-gray-50\/85:focus { background-color: rgb(3 7 18 / 0.85); }
+.dark .focus\:border-gray-50\/85:focus { border-color: rgb(3 7 18 / 0.85); }
+.dark .focus\:bg-gray-50\/90:focus { background-color: rgb(3 7 18 / 0.90); }
+.dark .focus\:border-gray-50\/90:focus { border-color: rgb(3 7 18 / 0.90); }
+.dark .focus\:bg-gray-50\/95:focus { background-color: rgb(3 7 18 / 0.95); }
+.dark .focus\:border-gray-50\/95:focus { border-color: rgb(3 7 18 / 0.95); }
+.dark .group:hover .group-hover\:bg-gray-50 { background-color: rgb(3 7 18); }
+.dark .group:hover .group-hover\:border-gray-50 { border-color: rgb(3 7 18); }
+.dark .group:hover .group-hover\:bg-gray-50\/5 { background-color: rgb(3 7 18 / 0.05); }
+.dark .group:hover .group-hover\:border-gray-50\/5 { border-color: rgb(3 7 18 / 0.05); }
+.dark .group:hover .group-hover\:bg-gray-50\/10 { background-color: rgb(3 7 18 / 0.10); }
+.dark .group:hover .group-hover\:border-gray-50\/10 { border-color: rgb(3 7 18 / 0.10); }
+.dark .group:hover .group-hover\:bg-gray-50\/15 { background-color: rgb(3 7 18 / 0.15); }
+.dark .group:hover .group-hover\:border-gray-50\/15 { border-color: rgb(3 7 18 / 0.15); }
+.dark .group:hover .group-hover\:bg-gray-50\/20 { background-color: rgb(3 7 18 / 0.20); }
+.dark .group:hover .group-hover\:border-gray-50\/20 { border-color: rgb(3 7 18 / 0.20); }
+.dark .group:hover .group-hover\:bg-gray-50\/25 { background-color: rgb(3 7 18 / 0.25); }
+.dark .group:hover .group-hover\:border-gray-50\/25 { border-color: rgb(3 7 18 / 0.25); }
+.dark .group:hover .group-hover\:bg-gray-50\/30 { background-color: rgb(3 7 18 / 0.30); }
+.dark .group:hover .group-hover\:border-gray-50\/30 { border-color: rgb(3 7 18 / 0.30); }
+.dark .group:hover .group-hover\:bg-gray-50\/35 { background-color: rgb(3 7 18 / 0.35); }
+.dark .group:hover .group-hover\:border-gray-50\/35 { border-color: rgb(3 7 18 / 0.35); }
+.dark .group:hover .group-hover\:bg-gray-50\/40 { background-color: rgb(3 7 18 / 0.40); }
+.dark .group:hover .group-hover\:border-gray-50\/40 { border-color: rgb(3 7 18 / 0.40); }
+.dark .group:hover .group-hover\:bg-gray-50\/45 { background-color: rgb(3 7 18 / 0.45); }
+.dark .group:hover .group-hover\:border-gray-50\/45 { border-color: rgb(3 7 18 / 0.45); }
+.dark .group:hover .group-hover\:bg-gray-50\/50 { background-color: rgb(3 7 18 / 0.50); }
+.dark .group:hover .group-hover\:border-gray-50\/50 { border-color: rgb(3 7 18 / 0.50); }
+.dark .group:hover .group-hover\:bg-gray-50\/55 { background-color: rgb(3 7 18 / 0.55); }
+.dark .group:hover .group-hover\:border-gray-50\/55 { border-color: rgb(3 7 18 / 0.55); }
+.dark .group:hover .group-hover\:bg-gray-50\/60 { background-color: rgb(3 7 18 / 0.60); }
+.dark .group:hover .group-hover\:border-gray-50\/60 { border-color: rgb(3 7 18 / 0.60); }
+.dark .group:hover .group-hover\:bg-gray-50\/65 { background-color: rgb(3 7 18 / 0.65); }
+.dark .group:hover .group-hover\:border-gray-50\/65 { border-color: rgb(3 7 18 / 0.65); }
+.dark .group:hover .group-hover\:bg-gray-50\/70 { background-color: rgb(3 7 18 / 0.70); }
+.dark .group:hover .group-hover\:border-gray-50\/70 { border-color: rgb(3 7 18 / 0.70); }
+.dark .group:hover .group-hover\:bg-gray-50\/75 { background-color: rgb(3 7 18 / 0.75); }
+.dark .group:hover .group-hover\:border-gray-50\/75 { border-color: rgb(3 7 18 / 0.75); }
+.dark .group:hover .group-hover\:bg-gray-50\/80 { background-color: rgb(3 7 18 / 0.80); }
+.dark .group:hover .group-hover\:border-gray-50\/80 { border-color: rgb(3 7 18 / 0.80); }
+.dark .group:hover .group-hover\:bg-gray-50\/85 { background-color: rgb(3 7 18 / 0.85); }
+.dark .group:hover .group-hover\:border-gray-50\/85 { border-color: rgb(3 7 18 / 0.85); }
+.dark .group:hover .group-hover\:bg-gray-50\/90 { background-color: rgb(3 7 18 / 0.90); }
+.dark .group:hover .group-hover\:border-gray-50\/90 { border-color: rgb(3 7 18 / 0.90); }
+.dark .group:hover .group-hover\:bg-gray-50\/95 { background-color: rgb(3 7 18 / 0.95); }
+.dark .group:hover .group-hover\:border-gray-50\/95 { border-color: rgb(3 7 18 / 0.95); }
+.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18); }
+.dark .divide-gray-50\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.05); }
+.dark .divide-gray-50\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.10); }
+.dark .divide-gray-50\/15 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.15); }
+.dark .divide-gray-50\/20 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.20); }
+.dark .divide-gray-50\/25 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.25); }
+.dark .divide-gray-50\/30 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.30); }
+.dark .divide-gray-50\/35 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.35); }
+.dark .divide-gray-50\/40 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.40); }
+.dark .divide-gray-50\/45 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.45); }
+.dark .divide-gray-50\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.50); }
+.dark .divide-gray-50\/55 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.55); }
+.dark .divide-gray-50\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.60); }
+.dark .divide-gray-50\/65 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.65); }
+.dark .divide-gray-50\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.70); }
+.dark .divide-gray-50\/75 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.75); }
+.dark .divide-gray-50\/80 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.80); }
+.dark .divide-gray-50\/85 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.85); }
+.dark .divide-gray-50\/90 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.90); }
+.dark .divide-gray-50\/95 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.95); }
+.dark .bg-gray-100 { background-color: rgb(31 41 55); }
+.dark .border-gray-100 { border-color: rgb(31 41 55); }
+.dark .bg-gray-100\/5 { background-color: rgb(31 41 55 / 0.05); }
+.dark .border-gray-100\/5 { border-color: rgb(31 41 55 / 0.05); }
+.dark .bg-gray-100\/10 { background-color: rgb(31 41 55 / 0.10); }
+.dark .border-gray-100\/10 { border-color: rgb(31 41 55 / 0.10); }
+.dark .bg-gray-100\/15 { background-color: rgb(31 41 55 / 0.15); }
+.dark .border-gray-100\/15 { border-color: rgb(31 41 55 / 0.15); }
+.dark .bg-gray-100\/20 { background-color: rgb(31 41 55 / 0.20); }
+.dark .border-gray-100\/20 { border-color: rgb(31 41 55 / 0.20); }
+.dark .bg-gray-100\/25 { background-color: rgb(31 41 55 / 0.25); }
+.dark .border-gray-100\/25 { border-color: rgb(31 41 55 / 0.25); }
+.dark .bg-gray-100\/30 { background-color: rgb(31 41 55 / 0.30); }
+.dark .border-gray-100\/30 { border-color: rgb(31 41 55 / 0.30); }
+.dark .bg-gray-100\/35 { background-color: rgb(31 41 55 / 0.35); }
+.dark .border-gray-100\/35 { border-color: rgb(31 41 55 / 0.35); }
+.dark .bg-gray-100\/40 { background-color: rgb(31 41 55 / 0.40); }
+.dark .border-gray-100\/40 { border-color: rgb(31 41 55 / 0.40); }
+.dark .bg-gray-100\/45 { background-color: rgb(31 41 55 / 0.45); }
+.dark .border-gray-100\/45 { border-color: rgb(31 41 55 / 0.45); }
+.dark .bg-gray-100\/50 { background-color: rgb(31 41 55 / 0.50); }
+.dark .border-gray-100\/50 { border-color: rgb(31 41 55 / 0.50); }
+.dark .bg-gray-100\/55 { background-color: rgb(31 41 55 / 0.55); }
+.dark .border-gray-100\/55 { border-color: rgb(31 41 55 / 0.55); }
+.dark .bg-gray-100\/60 { background-color: rgb(31 41 55 / 0.60); }
+.dark .border-gray-100\/60 { border-color: rgb(31 41 55 / 0.60); }
+.dark .bg-gray-100\/65 { background-color: rgb(31 41 55 / 0.65); }
+.dark .border-gray-100\/65 { border-color: rgb(31 41 55 / 0.65); }
+.dark .bg-gray-100\/70 { background-color: rgb(31 41 55 / 0.70); }
+.dark .border-gray-100\/70 { border-color: rgb(31 41 55 / 0.70); }
+.dark .bg-gray-100\/75 { background-color: rgb(31 41 55 / 0.75); }
+.dark .border-gray-100\/75 { border-color: rgb(31 41 55 / 0.75); }
+.dark .bg-gray-100\/80 { background-color: rgb(31 41 55 / 0.80); }
+.dark .border-gray-100\/80 { border-color: rgb(31 41 55 / 0.80); }
+.dark .bg-gray-100\/85 { background-color: rgb(31 41 55 / 0.85); }
+.dark .border-gray-100\/85 { border-color: rgb(31 41 55 / 0.85); }
+.dark .bg-gray-100\/90 { background-color: rgb(31 41 55 / 0.90); }
+.dark .border-gray-100\/90 { border-color: rgb(31 41 55 / 0.90); }
+.dark .bg-gray-100\/95 { background-color: rgb(31 41 55 / 0.95); }
+.dark .border-gray-100\/95 { border-color: rgb(31 41 55 / 0.95); }
+.dark .hover\:bg-gray-100:hover { background-color: rgb(31 41 55); }
+.dark .hover\:border-gray-100:hover { border-color: rgb(31 41 55); }
+.dark .hover\:bg-gray-100\/5:hover { background-color: rgb(31 41 55 / 0.05); }
+.dark .hover\:border-gray-100\/5:hover { border-color: rgb(31 41 55 / 0.05); }
+.dark .hover\:bg-gray-100\/10:hover { background-color: rgb(31 41 55 / 0.10); }
+.dark .hover\:border-gray-100\/10:hover { border-color: rgb(31 41 55 / 0.10); }
+.dark .hover\:bg-gray-100\/15:hover { background-color: rgb(31 41 55 / 0.15); }
+.dark .hover\:border-gray-100\/15:hover { border-color: rgb(31 41 55 / 0.15); }
+.dark .hover\:bg-gray-100\/20:hover { background-color: rgb(31 41 55 / 0.20); }
+.dark .hover\:border-gray-100\/20:hover { border-color: rgb(31 41 55 / 0.20); }
+.dark .hover\:bg-gray-100\/25:hover { background-color: rgb(31 41 55 / 0.25); }
+.dark .hover\:border-gray-100\/25:hover { border-color: rgb(31 41 55 / 0.25); }
+.dark .hover\:bg-gray-100\/30:hover { background-color: rgb(31 41 55 / 0.30); }
+.dark .hover\:border-gray-100\/30:hover { border-color: rgb(31 41 55 / 0.30); }
+.dark .hover\:bg-gray-100\/35:hover { background-color: rgb(31 41 55 / 0.35); }
+.dark .hover\:border-gray-100\/35:hover { border-color: rgb(31 41 55 / 0.35); }
+.dark .hover\:bg-gray-100\/40:hover { background-color: rgb(31 41 55 / 0.40); }
+.dark .hover\:border-gray-100\/40:hover { border-color: rgb(31 41 55 / 0.40); }
+.dark .hover\:bg-gray-100\/45:hover { background-color: rgb(31 41 55 / 0.45); }
+.dark .hover\:border-gray-100\/45:hover { border-color: rgb(31 41 55 / 0.45); }
+.dark .hover\:bg-gray-100\/50:hover { background-color: rgb(31 41 55 / 0.50); }
+.dark .hover\:border-gray-100\/50:hover { border-color: rgb(31 41 55 / 0.50); }
+.dark .hover\:bg-gray-100\/55:hover { background-color: rgb(31 41 55 / 0.55); }
+.dark .hover\:border-gray-100\/55:hover { border-color: rgb(31 41 55 / 0.55); }
+.dark .hover\:bg-gray-100\/60:hover { background-color: rgb(31 41 55 / 0.60); }
+.dark .hover\:border-gray-100\/60:hover { border-color: rgb(31 41 55 / 0.60); }
+.dark .hover\:bg-gray-100\/65:hover { background-color: rgb(31 41 55 / 0.65); }
+.dark .hover\:border-gray-100\/65:hover { border-color: rgb(31 41 55 / 0.65); }
+.dark .hover\:bg-gray-100\/70:hover { background-color: rgb(31 41 55 / 0.70); }
+.dark .hover\:border-gray-100\/70:hover { border-color: rgb(31 41 55 / 0.70); }
+.dark .hover\:bg-gray-100\/75:hover { background-color: rgb(31 41 55 / 0.75); }
+.dark .hover\:border-gray-100\/75:hover { border-color: rgb(31 41 55 / 0.75); }
+.dark .hover\:bg-gray-100\/80:hover { background-color: rgb(31 41 55 / 0.80); }
+.dark .hover\:border-gray-100\/80:hover { border-color: rgb(31 41 55 / 0.80); }
+.dark .hover\:bg-gray-100\/85:hover { background-color: rgb(31 41 55 / 0.85); }
+.dark .hover\:border-gray-100\/85:hover { border-color: rgb(31 41 55 / 0.85); }
+.dark .hover\:bg-gray-100\/90:hover { background-color: rgb(31 41 55 / 0.90); }
+.dark .hover\:border-gray-100\/90:hover { border-color: rgb(31 41 55 / 0.90); }
+.dark .hover\:bg-gray-100\/95:hover { background-color: rgb(31 41 55 / 0.95); }
+.dark .hover\:border-gray-100\/95:hover { border-color: rgb(31 41 55 / 0.95); }
+.dark .focus\:bg-gray-100:focus { background-color: rgb(31 41 55); }
+.dark .focus\:border-gray-100:focus { border-color: rgb(31 41 55); }
+.dark .focus\:bg-gray-100\/5:focus { background-color: rgb(31 41 55 / 0.05); }
+.dark .focus\:border-gray-100\/5:focus { border-color: rgb(31 41 55 / 0.05); }
+.dark .focus\:bg-gray-100\/10:focus { background-color: rgb(31 41 55 / 0.10); }
+.dark .focus\:border-gray-100\/10:focus { border-color: rgb(31 41 55 / 0.10); }
+.dark .focus\:bg-gray-100\/15:focus { background-color: rgb(31 41 55 / 0.15); }
+.dark .focus\:border-gray-100\/15:focus { border-color: rgb(31 41 55 / 0.15); }
+.dark .focus\:bg-gray-100\/20:focus { background-color: rgb(31 41 55 / 0.20); }
+.dark .focus\:border-gray-100\/20:focus { border-color: rgb(31 41 55 / 0.20); }
+.dark .focus\:bg-gray-100\/25:focus { background-color: rgb(31 41 55 / 0.25); }
+.dark .focus\:border-gray-100\/25:focus { border-color: rgb(31 41 55 / 0.25); }
+.dark .focus\:bg-gray-100\/30:focus { background-color: rgb(31 41 55 / 0.30); }
+.dark .focus\:border-gray-100\/30:focus { border-color: rgb(31 41 55 / 0.30); }
+.dark .focus\:bg-gray-100\/35:focus { background-color: rgb(31 41 55 / 0.35); }
+.dark .focus\:border-gray-100\/35:focus { border-color: rgb(31 41 55 / 0.35); }
+.dark .focus\:bg-gray-100\/40:focus { background-color: rgb(31 41 55 / 0.40); }
+.dark .focus\:border-gray-100\/40:focus { border-color: rgb(31 41 55 / 0.40); }
+.dark .focus\:bg-gray-100\/45:focus { background-color: rgb(31 41 55 / 0.45); }
+.dark .focus\:border-gray-100\/45:focus { border-color: rgb(31 41 55 / 0.45); }
+.dark .focus\:bg-gray-100\/50:focus { background-color: rgb(31 41 55 / 0.50); }
+.dark .focus\:border-gray-100\/50:focus { border-color: rgb(31 41 55 / 0.50); }
+.dark .focus\:bg-gray-100\/55:focus { background-color: rgb(31 41 55 / 0.55); }
+.dark .focus\:border-gray-100\/55:focus { border-color: rgb(31 41 55 / 0.55); }
+.dark .focus\:bg-gray-100\/60:focus { background-color: rgb(31 41 55 / 0.60); }
+.dark .focus\:border-gray-100\/60:focus { border-color: rgb(31 41 55 / 0.60); }
+.dark .focus\:bg-gray-100\/65:focus { background-color: rgb(31 41 55 / 0.65); }
+.dark .focus\:border-gray-100\/65:focus { border-color: rgb(31 41 55 / 0.65); }
+.dark .focus\:bg-gray-100\/70:focus { background-color: rgb(31 41 55 / 0.70); }
+.dark .focus\:border-gray-100\/70:focus { border-color: rgb(31 41 55 / 0.70); }
+.dark .focus\:bg-gray-100\/75:focus { background-color: rgb(31 41 55 / 0.75); }
+.dark .focus\:border-gray-100\/75:focus { border-color: rgb(31 41 55 / 0.75); }
+.dark .focus\:bg-gray-100\/80:focus { background-color: rgb(31 41 55 / 0.80); }
+.dark .focus\:border-gray-100\/80:focus { border-color: rgb(31 41 55 / 0.80); }
+.dark .focus\:bg-gray-100\/85:focus { background-color: rgb(31 41 55 / 0.85); }
+.dark .focus\:border-gray-100\/85:focus { border-color: rgb(31 41 55 / 0.85); }
+.dark .focus\:bg-gray-100\/90:focus { background-color: rgb(31 41 55 / 0.90); }
+.dark .focus\:border-gray-100\/90:focus { border-color: rgb(31 41 55 / 0.90); }
+.dark .focus\:bg-gray-100\/95:focus { background-color: rgb(31 41 55 / 0.95); }
+.dark .focus\:border-gray-100\/95:focus { border-color: rgb(31 41 55 / 0.95); }
+.dark .group:hover .group-hover\:bg-gray-100 { background-color: rgb(31 41 55); }
+.dark .group:hover .group-hover\:border-gray-100 { border-color: rgb(31 41 55); }
+.dark .group:hover .group-hover\:bg-gray-100\/5 { background-color: rgb(31 41 55 / 0.05); }
+.dark .group:hover .group-hover\:border-gray-100\/5 { border-color: rgb(31 41 55 / 0.05); }
+.dark .group:hover .group-hover\:bg-gray-100\/10 { background-color: rgb(31 41 55 / 0.10); }
+.dark .group:hover .group-hover\:border-gray-100\/10 { border-color: rgb(31 41 55 / 0.10); }
+.dark .group:hover .group-hover\:bg-gray-100\/15 { background-color: rgb(31 41 55 / 0.15); }
+.dark .group:hover .group-hover\:border-gray-100\/15 { border-color: rgb(31 41 55 / 0.15); }
+.dark .group:hover .group-hover\:bg-gray-100\/20 { background-color: rgb(31 41 55 / 0.20); }
+.dark .group:hover .group-hover\:border-gray-100\/20 { border-color: rgb(31 41 55 / 0.20); }
+.dark .group:hover .group-hover\:bg-gray-100\/25 { background-color: rgb(31 41 55 / 0.25); }
+.dark .group:hover .group-hover\:border-gray-100\/25 { border-color: rgb(31 41 55 / 0.25); }
+.dark .group:hover .group-hover\:bg-gray-100\/30 { background-color: rgb(31 41 55 / 0.30); }
+.dark .group:hover .group-hover\:border-gray-100\/30 { border-color: rgb(31 41 55 / 0.30); }
+.dark .group:hover .group-hover\:bg-gray-100\/35 { background-color: rgb(31 41 55 / 0.35); }
+.dark .group:hover .group-hover\:border-gray-100\/35 { border-color: rgb(31 41 55 / 0.35); }
+.dark .group:hover .group-hover\:bg-gray-100\/40 { background-color: rgb(31 41 55 / 0.40); }
+.dark .group:hover .group-hover\:border-gray-100\/40 { border-color: rgb(31 41 55 / 0.40); }
+.dark .group:hover .group-hover\:bg-gray-100\/45 { background-color: rgb(31 41 55 / 0.45); }
+.dark .group:hover .group-hover\:border-gray-100\/45 { border-color: rgb(31 41 55 / 0.45); }
+.dark .group:hover .group-hover\:bg-gray-100\/50 { background-color: rgb(31 41 55 / 0.50); }
+.dark .group:hover .group-hover\:border-gray-100\/50 { border-color: rgb(31 41 55 / 0.50); }
+.dark .group:hover .group-hover\:bg-gray-100\/55 { background-color: rgb(31 41 55 / 0.55); }
+.dark .group:hover .group-hover\:border-gray-100\/55 { border-color: rgb(31 41 55 / 0.55); }
+.dark .group:hover .group-hover\:bg-gray-100\/60 { background-color: rgb(31 41 55 / 0.60); }
+.dark .group:hover .group-hover\:border-gray-100\/60 { border-color: rgb(31 41 55 / 0.60); }
+.dark .group:hover .group-hover\:bg-gray-100\/65 { background-color: rgb(31 41 55 / 0.65); }
+.dark .group:hover .group-hover\:border-gray-100\/65 { border-color: rgb(31 41 55 / 0.65); }
+.dark .group:hover .group-hover\:bg-gray-100\/70 { background-color: rgb(31 41 55 / 0.70); }
+.dark .group:hover .group-hover\:border-gray-100\/70 { border-color: rgb(31 41 55 / 0.70); }
+.dark .group:hover .group-hover\:bg-gray-100\/75 { background-color: rgb(31 41 55 / 0.75); }
+.dark .group:hover .group-hover\:border-gray-100\/75 { border-color: rgb(31 41 55 / 0.75); }
+.dark .group:hover .group-hover\:bg-gray-100\/80 { background-color: rgb(31 41 55 / 0.80); }
+.dark .group:hover .group-hover\:border-gray-100\/80 { border-color: rgb(31 41 55 / 0.80); }
+.dark .group:hover .group-hover\:bg-gray-100\/85 { background-color: rgb(31 41 55 / 0.85); }
+.dark .group:hover .group-hover\:border-gray-100\/85 { border-color: rgb(31 41 55 / 0.85); }
+.dark .group:hover .group-hover\:bg-gray-100\/90 { background-color: rgb(31 41 55 / 0.90); }
+.dark .group:hover .group-hover\:border-gray-100\/90 { border-color: rgb(31 41 55 / 0.90); }
+.dark .group:hover .group-hover\:bg-gray-100\/95 { background-color: rgb(31 41 55 / 0.95); }
+.dark .group:hover .group-hover\:border-gray-100\/95 { border-color: rgb(31 41 55 / 0.95); }
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55); }
+.dark .divide-gray-100\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.05); }
+.dark .divide-gray-100\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.10); }
+.dark .divide-gray-100\/15 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.15); }
+.dark .divide-gray-100\/20 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.20); }
+.dark .divide-gray-100\/25 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.25); }
+.dark .divide-gray-100\/30 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.30); }
+.dark .divide-gray-100\/35 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.35); }
+.dark .divide-gray-100\/40 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.40); }
+.dark .divide-gray-100\/45 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.45); }
+.dark .divide-gray-100\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.50); }
+.dark .divide-gray-100\/55 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.55); }
+.dark .divide-gray-100\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.60); }
+.dark .divide-gray-100\/65 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.65); }
+.dark .divide-gray-100\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.70); }
+.dark .divide-gray-100\/75 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.75); }
+.dark .divide-gray-100\/80 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.80); }
+.dark .divide-gray-100\/85 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.85); }
+.dark .divide-gray-100\/90 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.90); }
+.dark .divide-gray-100\/95 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(31 41 55 / 0.95); }
+.dark .bg-gray-200 { background-color: rgb(55 65 81); }
+.dark .border-gray-200 { border-color: rgb(55 65 81); }
+.dark .bg-gray-200\/5 { background-color: rgb(55 65 81 / 0.05); }
+.dark .border-gray-200\/5 { border-color: rgb(55 65 81 / 0.05); }
+.dark .bg-gray-200\/10 { background-color: rgb(55 65 81 / 0.10); }
+.dark .border-gray-200\/10 { border-color: rgb(55 65 81 / 0.10); }
+.dark .bg-gray-200\/15 { background-color: rgb(55 65 81 / 0.15); }
+.dark .border-gray-200\/15 { border-color: rgb(55 65 81 / 0.15); }
+.dark .bg-gray-200\/20 { background-color: rgb(55 65 81 / 0.20); }
+.dark .border-gray-200\/20 { border-color: rgb(55 65 81 / 0.20); }
+.dark .bg-gray-200\/25 { background-color: rgb(55 65 81 / 0.25); }
+.dark .border-gray-200\/25 { border-color: rgb(55 65 81 / 0.25); }
+.dark .bg-gray-200\/30 { background-color: rgb(55 65 81 / 0.30); }
+.dark .border-gray-200\/30 { border-color: rgb(55 65 81 / 0.30); }
+.dark .bg-gray-200\/35 { background-color: rgb(55 65 81 / 0.35); }
+.dark .border-gray-200\/35 { border-color: rgb(55 65 81 / 0.35); }
+.dark .bg-gray-200\/40 { background-color: rgb(55 65 81 / 0.40); }
+.dark .border-gray-200\/40 { border-color: rgb(55 65 81 / 0.40); }
+.dark .bg-gray-200\/45 { background-color: rgb(55 65 81 / 0.45); }
+.dark .border-gray-200\/45 { border-color: rgb(55 65 81 / 0.45); }
+.dark .bg-gray-200\/50 { background-color: rgb(55 65 81 / 0.50); }
+.dark .border-gray-200\/50 { border-color: rgb(55 65 81 / 0.50); }
+.dark .bg-gray-200\/55 { background-color: rgb(55 65 81 / 0.55); }
+.dark .border-gray-200\/55 { border-color: rgb(55 65 81 / 0.55); }
+.dark .bg-gray-200\/60 { background-color: rgb(55 65 81 / 0.60); }
+.dark .border-gray-200\/60 { border-color: rgb(55 65 81 / 0.60); }
+.dark .bg-gray-200\/65 { background-color: rgb(55 65 81 / 0.65); }
+.dark .border-gray-200\/65 { border-color: rgb(55 65 81 / 0.65); }
+.dark .bg-gray-200\/70 { background-color: rgb(55 65 81 / 0.70); }
+.dark .border-gray-200\/70 { border-color: rgb(55 65 81 / 0.70); }
+.dark .bg-gray-200\/75 { background-color: rgb(55 65 81 / 0.75); }
+.dark .border-gray-200\/75 { border-color: rgb(55 65 81 / 0.75); }
+.dark .bg-gray-200\/80 { background-color: rgb(55 65 81 / 0.80); }
+.dark .border-gray-200\/80 { border-color: rgb(55 65 81 / 0.80); }
+.dark .bg-gray-200\/85 { background-color: rgb(55 65 81 / 0.85); }
+.dark .border-gray-200\/85 { border-color: rgb(55 65 81 / 0.85); }
+.dark .bg-gray-200\/90 { background-color: rgb(55 65 81 / 0.90); }
+.dark .border-gray-200\/90 { border-color: rgb(55 65 81 / 0.90); }
+.dark .bg-gray-200\/95 { background-color: rgb(55 65 81 / 0.95); }
+.dark .border-gray-200\/95 { border-color: rgb(55 65 81 / 0.95); }
+.dark .hover\:bg-gray-200:hover { background-color: rgb(55 65 81); }
+.dark .hover\:border-gray-200:hover { border-color: rgb(55 65 81); }
+.dark .hover\:bg-gray-200\/5:hover { background-color: rgb(55 65 81 / 0.05); }
+.dark .hover\:border-gray-200\/5:hover { border-color: rgb(55 65 81 / 0.05); }
+.dark .hover\:bg-gray-200\/10:hover { background-color: rgb(55 65 81 / 0.10); }
+.dark .hover\:border-gray-200\/10:hover { border-color: rgb(55 65 81 / 0.10); }
+.dark .hover\:bg-gray-200\/15:hover { background-color: rgb(55 65 81 / 0.15); }
+.dark .hover\:border-gray-200\/15:hover { border-color: rgb(55 65 81 / 0.15); }
+.dark .hover\:bg-gray-200\/20:hover { background-color: rgb(55 65 81 / 0.20); }
+.dark .hover\:border-gray-200\/20:hover { border-color: rgb(55 65 81 / 0.20); }
+.dark .hover\:bg-gray-200\/25:hover { background-color: rgb(55 65 81 / 0.25); }
+.dark .hover\:border-gray-200\/25:hover { border-color: rgb(55 65 81 / 0.25); }
+.dark .hover\:bg-gray-200\/30:hover { background-color: rgb(55 65 81 / 0.30); }
+.dark .hover\:border-gray-200\/30:hover { border-color: rgb(55 65 81 / 0.30); }
+.dark .hover\:bg-gray-200\/35:hover { background-color: rgb(55 65 81 / 0.35); }
+.dark .hover\:border-gray-200\/35:hover { border-color: rgb(55 65 81 / 0.35); }
+.dark .hover\:bg-gray-200\/40:hover { background-color: rgb(55 65 81 / 0.40); }
+.dark .hover\:border-gray-200\/40:hover { border-color: rgb(55 65 81 / 0.40); }
+.dark .hover\:bg-gray-200\/45:hover { background-color: rgb(55 65 81 / 0.45); }
+.dark .hover\:border-gray-200\/45:hover { border-color: rgb(55 65 81 / 0.45); }
+.dark .hover\:bg-gray-200\/50:hover { background-color: rgb(55 65 81 / 0.50); }
+.dark .hover\:border-gray-200\/50:hover { border-color: rgb(55 65 81 / 0.50); }
+.dark .hover\:bg-gray-200\/55:hover { background-color: rgb(55 65 81 / 0.55); }
+.dark .hover\:border-gray-200\/55:hover { border-color: rgb(55 65 81 / 0.55); }
+.dark .hover\:bg-gray-200\/60:hover { background-color: rgb(55 65 81 / 0.60); }
+.dark .hover\:border-gray-200\/60:hover { border-color: rgb(55 65 81 / 0.60); }
+.dark .hover\:bg-gray-200\/65:hover { background-color: rgb(55 65 81 / 0.65); }
+.dark .hover\:border-gray-200\/65:hover { border-color: rgb(55 65 81 / 0.65); }
+.dark .hover\:bg-gray-200\/70:hover { background-color: rgb(55 65 81 / 0.70); }
+.dark .hover\:border-gray-200\/70:hover { border-color: rgb(55 65 81 / 0.70); }
+.dark .hover\:bg-gray-200\/75:hover { background-color: rgb(55 65 81 / 0.75); }
+.dark .hover\:border-gray-200\/75:hover { border-color: rgb(55 65 81 / 0.75); }
+.dark .hover\:bg-gray-200\/80:hover { background-color: rgb(55 65 81 / 0.80); }
+.dark .hover\:border-gray-200\/80:hover { border-color: rgb(55 65 81 / 0.80); }
+.dark .hover\:bg-gray-200\/85:hover { background-color: rgb(55 65 81 / 0.85); }
+.dark .hover\:border-gray-200\/85:hover { border-color: rgb(55 65 81 / 0.85); }
+.dark .hover\:bg-gray-200\/90:hover { background-color: rgb(55 65 81 / 0.90); }
+.dark .hover\:border-gray-200\/90:hover { border-color: rgb(55 65 81 / 0.90); }
+.dark .hover\:bg-gray-200\/95:hover { background-color: rgb(55 65 81 / 0.95); }
+.dark .hover\:border-gray-200\/95:hover { border-color: rgb(55 65 81 / 0.95); }
+.dark .focus\:bg-gray-200:focus { background-color: rgb(55 65 81); }
+.dark .focus\:border-gray-200:focus { border-color: rgb(55 65 81); }
+.dark .focus\:bg-gray-200\/5:focus { background-color: rgb(55 65 81 / 0.05); }
+.dark .focus\:border-gray-200\/5:focus { border-color: rgb(55 65 81 / 0.05); }
+.dark .focus\:bg-gray-200\/10:focus { background-color: rgb(55 65 81 / 0.10); }
+.dark .focus\:border-gray-200\/10:focus { border-color: rgb(55 65 81 / 0.10); }
+.dark .focus\:bg-gray-200\/15:focus { background-color: rgb(55 65 81 / 0.15); }
+.dark .focus\:border-gray-200\/15:focus { border-color: rgb(55 65 81 / 0.15); }
+.dark .focus\:bg-gray-200\/20:focus { background-color: rgb(55 65 81 / 0.20); }
+.dark .focus\:border-gray-200\/20:focus { border-color: rgb(55 65 81 / 0.20); }
+.dark .focus\:bg-gray-200\/25:focus { background-color: rgb(55 65 81 / 0.25); }
+.dark .focus\:border-gray-200\/25:focus { border-color: rgb(55 65 81 / 0.25); }
+.dark .focus\:bg-gray-200\/30:focus { background-color: rgb(55 65 81 / 0.30); }
+.dark .focus\:border-gray-200\/30:focus { border-color: rgb(55 65 81 / 0.30); }
+.dark .focus\:bg-gray-200\/35:focus { background-color: rgb(55 65 81 / 0.35); }
+.dark .focus\:border-gray-200\/35:focus { border-color: rgb(55 65 81 / 0.35); }
+.dark .focus\:bg-gray-200\/40:focus { background-color: rgb(55 65 81 / 0.40); }
+.dark .focus\:border-gray-200\/40:focus { border-color: rgb(55 65 81 / 0.40); }
+.dark .focus\:bg-gray-200\/45:focus { background-color: rgb(55 65 81 / 0.45); }
+.dark .focus\:border-gray-200\/45:focus { border-color: rgb(55 65 81 / 0.45); }
+.dark .focus\:bg-gray-200\/50:focus { background-color: rgb(55 65 81 / 0.50); }
+.dark .focus\:border-gray-200\/50:focus { border-color: rgb(55 65 81 / 0.50); }
+.dark .focus\:bg-gray-200\/55:focus { background-color: rgb(55 65 81 / 0.55); }
+.dark .focus\:border-gray-200\/55:focus { border-color: rgb(55 65 81 / 0.55); }
+.dark .focus\:bg-gray-200\/60:focus { background-color: rgb(55 65 81 / 0.60); }
+.dark .focus\:border-gray-200\/60:focus { border-color: rgb(55 65 81 / 0.60); }
+.dark .focus\:bg-gray-200\/65:focus { background-color: rgb(55 65 81 / 0.65); }
+.dark .focus\:border-gray-200\/65:focus { border-color: rgb(55 65 81 / 0.65); }
+.dark .focus\:bg-gray-200\/70:focus { background-color: rgb(55 65 81 / 0.70); }
+.dark .focus\:border-gray-200\/70:focus { border-color: rgb(55 65 81 / 0.70); }
+.dark .focus\:bg-gray-200\/75:focus { background-color: rgb(55 65 81 / 0.75); }
+.dark .focus\:border-gray-200\/75:focus { border-color: rgb(55 65 81 / 0.75); }
+.dark .focus\:bg-gray-200\/80:focus { background-color: rgb(55 65 81 / 0.80); }
+.dark .focus\:border-gray-200\/80:focus { border-color: rgb(55 65 81 / 0.80); }
+.dark .focus\:bg-gray-200\/85:focus { background-color: rgb(55 65 81 / 0.85); }
+.dark .focus\:border-gray-200\/85:focus { border-color: rgb(55 65 81 / 0.85); }
+.dark .focus\:bg-gray-200\/90:focus { background-color: rgb(55 65 81 / 0.90); }
+.dark .focus\:border-gray-200\/90:focus { border-color: rgb(55 65 81 / 0.90); }
+.dark .focus\:bg-gray-200\/95:focus { background-color: rgb(55 65 81 / 0.95); }
+.dark .focus\:border-gray-200\/95:focus { border-color: rgb(55 65 81 / 0.95); }
+.dark .group:hover .group-hover\:bg-gray-200 { background-color: rgb(55 65 81); }
+.dark .group:hover .group-hover\:border-gray-200 { border-color: rgb(55 65 81); }
+.dark .group:hover .group-hover\:bg-gray-200\/5 { background-color: rgb(55 65 81 / 0.05); }
+.dark .group:hover .group-hover\:border-gray-200\/5 { border-color: rgb(55 65 81 / 0.05); }
+.dark .group:hover .group-hover\:bg-gray-200\/10 { background-color: rgb(55 65 81 / 0.10); }
+.dark .group:hover .group-hover\:border-gray-200\/10 { border-color: rgb(55 65 81 / 0.10); }
+.dark .group:hover .group-hover\:bg-gray-200\/15 { background-color: rgb(55 65 81 / 0.15); }
+.dark .group:hover .group-hover\:border-gray-200\/15 { border-color: rgb(55 65 81 / 0.15); }
+.dark .group:hover .group-hover\:bg-gray-200\/20 { background-color: rgb(55 65 81 / 0.20); }
+.dark .group:hover .group-hover\:border-gray-200\/20 { border-color: rgb(55 65 81 / 0.20); }
+.dark .group:hover .group-hover\:bg-gray-200\/25 { background-color: rgb(55 65 81 / 0.25); }
+.dark .group:hover .group-hover\:border-gray-200\/25 { border-color: rgb(55 65 81 / 0.25); }
+.dark .group:hover .group-hover\:bg-gray-200\/30 { background-color: rgb(55 65 81 / 0.30); }
+.dark .group:hover .group-hover\:border-gray-200\/30 { border-color: rgb(55 65 81 / 0.30); }
+.dark .group:hover .group-hover\:bg-gray-200\/35 { background-color: rgb(55 65 81 / 0.35); }
+.dark .group:hover .group-hover\:border-gray-200\/35 { border-color: rgb(55 65 81 / 0.35); }
+.dark .group:hover .group-hover\:bg-gray-200\/40 { background-color: rgb(55 65 81 / 0.40); }
+.dark .group:hover .group-hover\:border-gray-200\/40 { border-color: rgb(55 65 81 / 0.40); }
+.dark .group:hover .group-hover\:bg-gray-200\/45 { background-color: rgb(55 65 81 / 0.45); }
+.dark .group:hover .group-hover\:border-gray-200\/45 { border-color: rgb(55 65 81 / 0.45); }
+.dark .group:hover .group-hover\:bg-gray-200\/50 { background-color: rgb(55 65 81 / 0.50); }
+.dark .group:hover .group-hover\:border-gray-200\/50 { border-color: rgb(55 65 81 / 0.50); }
+.dark .group:hover .group-hover\:bg-gray-200\/55 { background-color: rgb(55 65 81 / 0.55); }
+.dark .group:hover .group-hover\:border-gray-200\/55 { border-color: rgb(55 65 81 / 0.55); }
+.dark .group:hover .group-hover\:bg-gray-200\/60 { background-color: rgb(55 65 81 / 0.60); }
+.dark .group:hover .group-hover\:border-gray-200\/60 { border-color: rgb(55 65 81 / 0.60); }
+.dark .group:hover .group-hover\:bg-gray-200\/65 { background-color: rgb(55 65 81 / 0.65); }
+.dark .group:hover .group-hover\:border-gray-200\/65 { border-color: rgb(55 65 81 / 0.65); }
+.dark .group:hover .group-hover\:bg-gray-200\/70 { background-color: rgb(55 65 81 / 0.70); }
+.dark .group:hover .group-hover\:border-gray-200\/70 { border-color: rgb(55 65 81 / 0.70); }
+.dark .group:hover .group-hover\:bg-gray-200\/75 { background-color: rgb(55 65 81 / 0.75); }
+.dark .group:hover .group-hover\:border-gray-200\/75 { border-color: rgb(55 65 81 / 0.75); }
+.dark .group:hover .group-hover\:bg-gray-200\/80 { background-color: rgb(55 65 81 / 0.80); }
+.dark .group:hover .group-hover\:border-gray-200\/80 { border-color: rgb(55 65 81 / 0.80); }
+.dark .group:hover .group-hover\:bg-gray-200\/85 { background-color: rgb(55 65 81 / 0.85); }
+.dark .group:hover .group-hover\:border-gray-200\/85 { border-color: rgb(55 65 81 / 0.85); }
+.dark .group:hover .group-hover\:bg-gray-200\/90 { background-color: rgb(55 65 81 / 0.90); }
+.dark .group:hover .group-hover\:border-gray-200\/90 { border-color: rgb(55 65 81 / 0.90); }
+.dark .group:hover .group-hover\:bg-gray-200\/95 { background-color: rgb(55 65 81 / 0.95); }
+.dark .group:hover .group-hover\:border-gray-200\/95 { border-color: rgb(55 65 81 / 0.95); }
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81); }
+.dark .divide-gray-200\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.05); }
+.dark .divide-gray-200\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.10); }
+.dark .divide-gray-200\/15 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.15); }
+.dark .divide-gray-200\/20 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.20); }
+.dark .divide-gray-200\/25 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.25); }
+.dark .divide-gray-200\/30 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.30); }
+.dark .divide-gray-200\/35 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.35); }
+.dark .divide-gray-200\/40 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.40); }
+.dark .divide-gray-200\/45 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.45); }
+.dark .divide-gray-200\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.50); }
+.dark .divide-gray-200\/55 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.55); }
+.dark .divide-gray-200\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.60); }
+.dark .divide-gray-200\/65 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.65); }
+.dark .divide-gray-200\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.70); }
+.dark .divide-gray-200\/75 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.75); }
+.dark .divide-gray-200\/80 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.80); }
+.dark .divide-gray-200\/85 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.85); }
+.dark .divide-gray-200\/90 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.90); }
+.dark .divide-gray-200\/95 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81 / 0.95); }
+.dark .bg-gray-300 { background-color: rgb(75 85 99); }
+.dark .border-gray-300 { border-color: rgb(75 85 99); }
+.dark .bg-gray-300\/5 { background-color: rgb(75 85 99 / 0.05); }
+.dark .border-gray-300\/5 { border-color: rgb(75 85 99 / 0.05); }
+.dark .bg-gray-300\/10 { background-color: rgb(75 85 99 / 0.10); }
+.dark .border-gray-300\/10 { border-color: rgb(75 85 99 / 0.10); }
+.dark .bg-gray-300\/15 { background-color: rgb(75 85 99 / 0.15); }
+.dark .border-gray-300\/15 { border-color: rgb(75 85 99 / 0.15); }
+.dark .bg-gray-300\/20 { background-color: rgb(75 85 99 / 0.20); }
+.dark .border-gray-300\/20 { border-color: rgb(75 85 99 / 0.20); }
+.dark .bg-gray-300\/25 { background-color: rgb(75 85 99 / 0.25); }
+.dark .border-gray-300\/25 { border-color: rgb(75 85 99 / 0.25); }
+.dark .bg-gray-300\/30 { background-color: rgb(75 85 99 / 0.30); }
+.dark .border-gray-300\/30 { border-color: rgb(75 85 99 / 0.30); }
+.dark .bg-gray-300\/35 { background-color: rgb(75 85 99 / 0.35); }
+.dark .border-gray-300\/35 { border-color: rgb(75 85 99 / 0.35); }
+.dark .bg-gray-300\/40 { background-color: rgb(75 85 99 / 0.40); }
+.dark .border-gray-300\/40 { border-color: rgb(75 85 99 / 0.40); }
+.dark .bg-gray-300\/45 { background-color: rgb(75 85 99 / 0.45); }
+.dark .border-gray-300\/45 { border-color: rgb(75 85 99 / 0.45); }
+.dark .bg-gray-300\/50 { background-color: rgb(75 85 99 / 0.50); }
+.dark .border-gray-300\/50 { border-color: rgb(75 85 99 / 0.50); }
+.dark .bg-gray-300\/55 { background-color: rgb(75 85 99 / 0.55); }
+.dark .border-gray-300\/55 { border-color: rgb(75 85 99 / 0.55); }
+.dark .bg-gray-300\/60 { background-color: rgb(75 85 99 / 0.60); }
+.dark .border-gray-300\/60 { border-color: rgb(75 85 99 / 0.60); }
+.dark .bg-gray-300\/65 { background-color: rgb(75 85 99 / 0.65); }
+.dark .border-gray-300\/65 { border-color: rgb(75 85 99 / 0.65); }
+.dark .bg-gray-300\/70 { background-color: rgb(75 85 99 / 0.70); }
+.dark .border-gray-300\/70 { border-color: rgb(75 85 99 / 0.70); }
+.dark .bg-gray-300\/75 { background-color: rgb(75 85 99 / 0.75); }
+.dark .border-gray-300\/75 { border-color: rgb(75 85 99 / 0.75); }
+.dark .bg-gray-300\/80 { background-color: rgb(75 85 99 / 0.80); }
+.dark .border-gray-300\/80 { border-color: rgb(75 85 99 / 0.80); }
+.dark .bg-gray-300\/85 { background-color: rgb(75 85 99 / 0.85); }
+.dark .border-gray-300\/85 { border-color: rgb(75 85 99 / 0.85); }
+.dark .bg-gray-300\/90 { background-color: rgb(75 85 99 / 0.90); }
+.dark .border-gray-300\/90 { border-color: rgb(75 85 99 / 0.90); }
+.dark .bg-gray-300\/95 { background-color: rgb(75 85 99 / 0.95); }
+.dark .border-gray-300\/95 { border-color: rgb(75 85 99 / 0.95); }
+.dark .hover\:bg-gray-300:hover { background-color: rgb(75 85 99); }
+.dark .hover\:border-gray-300:hover { border-color: rgb(75 85 99); }
+.dark .hover\:bg-gray-300\/5:hover { background-color: rgb(75 85 99 / 0.05); }
+.dark .hover\:border-gray-300\/5:hover { border-color: rgb(75 85 99 / 0.05); }
+.dark .hover\:bg-gray-300\/10:hover { background-color: rgb(75 85 99 / 0.10); }
+.dark .hover\:border-gray-300\/10:hover { border-color: rgb(75 85 99 / 0.10); }
+.dark .hover\:bg-gray-300\/15:hover { background-color: rgb(75 85 99 / 0.15); }
+.dark .hover\:border-gray-300\/15:hover { border-color: rgb(75 85 99 / 0.15); }
+.dark .hover\:bg-gray-300\/20:hover { background-color: rgb(75 85 99 / 0.20); }
+.dark .hover\:border-gray-300\/20:hover { border-color: rgb(75 85 99 / 0.20); }
+.dark .hover\:bg-gray-300\/25:hover { background-color: rgb(75 85 99 / 0.25); }
+.dark .hover\:border-gray-300\/25:hover { border-color: rgb(75 85 99 / 0.25); }
+.dark .hover\:bg-gray-300\/30:hover { background-color: rgb(75 85 99 / 0.30); }
+.dark .hover\:border-gray-300\/30:hover { border-color: rgb(75 85 99 / 0.30); }
+.dark .hover\:bg-gray-300\/35:hover { background-color: rgb(75 85 99 / 0.35); }
+.dark .hover\:border-gray-300\/35:hover { border-color: rgb(75 85 99 / 0.35); }
+.dark .hover\:bg-gray-300\/40:hover { background-color: rgb(75 85 99 / 0.40); }
+.dark .hover\:border-gray-300\/40:hover { border-color: rgb(75 85 99 / 0.40); }
+.dark .hover\:bg-gray-300\/45:hover { background-color: rgb(75 85 99 / 0.45); }
+.dark .hover\:border-gray-300\/45:hover { border-color: rgb(75 85 99 / 0.45); }
+.dark .hover\:bg-gray-300\/50:hover { background-color: rgb(75 85 99 / 0.50); }
+.dark .hover\:border-gray-300\/50:hover { border-color: rgb(75 85 99 / 0.50); }
+.dark .hover\:bg-gray-300\/55:hover { background-color: rgb(75 85 99 / 0.55); }
+.dark .hover\:border-gray-300\/55:hover { border-color: rgb(75 85 99 / 0.55); }
+.dark .hover\:bg-gray-300\/60:hover { background-color: rgb(75 85 99 / 0.60); }
+.dark .hover\:border-gray-300\/60:hover { border-color: rgb(75 85 99 / 0.60); }
+.dark .hover\:bg-gray-300\/65:hover { background-color: rgb(75 85 99 / 0.65); }
+.dark .hover\:border-gray-300\/65:hover { border-color: rgb(75 85 99 / 0.65); }
+.dark .hover\:bg-gray-300\/70:hover { background-color: rgb(75 85 99 / 0.70); }
+.dark .hover\:border-gray-300\/70:hover { border-color: rgb(75 85 99 / 0.70); }
+.dark .hover\:bg-gray-300\/75:hover { background-color: rgb(75 85 99 / 0.75); }
+.dark .hover\:border-gray-300\/75:hover { border-color: rgb(75 85 99 / 0.75); }
+.dark .hover\:bg-gray-300\/80:hover { background-color: rgb(75 85 99 / 0.80); }
+.dark .hover\:border-gray-300\/80:hover { border-color: rgb(75 85 99 / 0.80); }
+.dark .hover\:bg-gray-300\/85:hover { background-color: rgb(75 85 99 / 0.85); }
+.dark .hover\:border-gray-300\/85:hover { border-color: rgb(75 85 99 / 0.85); }
+.dark .hover\:bg-gray-300\/90:hover { background-color: rgb(75 85 99 / 0.90); }
+.dark .hover\:border-gray-300\/90:hover { border-color: rgb(75 85 99 / 0.90); }
+.dark .hover\:bg-gray-300\/95:hover { background-color: rgb(75 85 99 / 0.95); }
+.dark .hover\:border-gray-300\/95:hover { border-color: rgb(75 85 99 / 0.95); }
+.dark .focus\:bg-gray-300:focus { background-color: rgb(75 85 99); }
+.dark .focus\:border-gray-300:focus { border-color: rgb(75 85 99); }
+.dark .focus\:bg-gray-300\/5:focus { background-color: rgb(75 85 99 / 0.05); }
+.dark .focus\:border-gray-300\/5:focus { border-color: rgb(75 85 99 / 0.05); }
+.dark .focus\:bg-gray-300\/10:focus { background-color: rgb(75 85 99 / 0.10); }
+.dark .focus\:border-gray-300\/10:focus { border-color: rgb(75 85 99 / 0.10); }
+.dark .focus\:bg-gray-300\/15:focus { background-color: rgb(75 85 99 / 0.15); }
+.dark .focus\:border-gray-300\/15:focus { border-color: rgb(75 85 99 / 0.15); }
+.dark .focus\:bg-gray-300\/20:focus { background-color: rgb(75 85 99 / 0.20); }
+.dark .focus\:border-gray-300\/20:focus { border-color: rgb(75 85 99 / 0.20); }
+.dark .focus\:bg-gray-300\/25:focus { background-color: rgb(75 85 99 / 0.25); }
+.dark .focus\:border-gray-300\/25:focus { border-color: rgb(75 85 99 / 0.25); }
+.dark .focus\:bg-gray-300\/30:focus { background-color: rgb(75 85 99 / 0.30); }
+.dark .focus\:border-gray-300\/30:focus { border-color: rgb(75 85 99 / 0.30); }
+.dark .focus\:bg-gray-300\/35:focus { background-color: rgb(75 85 99 / 0.35); }
+.dark .focus\:border-gray-300\/35:focus { border-color: rgb(75 85 99 / 0.35); }
+.dark .focus\:bg-gray-300\/40:focus { background-color: rgb(75 85 99 / 0.40); }
+.dark .focus\:border-gray-300\/40:focus { border-color: rgb(75 85 99 / 0.40); }
+.dark .focus\:bg-gray-300\/45:focus { background-color: rgb(75 85 99 / 0.45); }
+.dark .focus\:border-gray-300\/45:focus { border-color: rgb(75 85 99 / 0.45); }
+.dark .focus\:bg-gray-300\/50:focus { background-color: rgb(75 85 99 / 0.50); }
+.dark .focus\:border-gray-300\/50:focus { border-color: rgb(75 85 99 / 0.50); }
+.dark .focus\:bg-gray-300\/55:focus { background-color: rgb(75 85 99 / 0.55); }
+.dark .focus\:border-gray-300\/55:focus { border-color: rgb(75 85 99 / 0.55); }
+.dark .focus\:bg-gray-300\/60:focus { background-color: rgb(75 85 99 / 0.60); }
+.dark .focus\:border-gray-300\/60:focus { border-color: rgb(75 85 99 / 0.60); }
+.dark .focus\:bg-gray-300\/65:focus { background-color: rgb(75 85 99 / 0.65); }
+.dark .focus\:border-gray-300\/65:focus { border-color: rgb(75 85 99 / 0.65); }
+.dark .focus\:bg-gray-300\/70:focus { background-color: rgb(75 85 99 / 0.70); }
+.dark .focus\:border-gray-300\/70:focus { border-color: rgb(75 85 99 / 0.70); }
+.dark .focus\:bg-gray-300\/75:focus { background-color: rgb(75 85 99 / 0.75); }
+.dark .focus\:border-gray-300\/75:focus { border-color: rgb(75 85 99 / 0.75); }
+.dark .focus\:bg-gray-300\/80:focus { background-color: rgb(75 85 99 / 0.80); }
+.dark .focus\:border-gray-300\/80:focus { border-color: rgb(75 85 99 / 0.80); }
+.dark .focus\:bg-gray-300\/85:focus { background-color: rgb(75 85 99 / 0.85); }
+.dark .focus\:border-gray-300\/85:focus { border-color: rgb(75 85 99 / 0.85); }
+.dark .focus\:bg-gray-300\/90:focus { background-color: rgb(75 85 99 / 0.90); }
+.dark .focus\:border-gray-300\/90:focus { border-color: rgb(75 85 99 / 0.90); }
+.dark .focus\:bg-gray-300\/95:focus { background-color: rgb(75 85 99 / 0.95); }
+.dark .focus\:border-gray-300\/95:focus { border-color: rgb(75 85 99 / 0.95); }
+.dark .group:hover .group-hover\:bg-gray-300 { background-color: rgb(75 85 99); }
+.dark .group:hover .group-hover\:border-gray-300 { border-color: rgb(75 85 99); }
+.dark .group:hover .group-hover\:bg-gray-300\/5 { background-color: rgb(75 85 99 / 0.05); }
+.dark .group:hover .group-hover\:border-gray-300\/5 { border-color: rgb(75 85 99 / 0.05); }
+.dark .group:hover .group-hover\:bg-gray-300\/10 { background-color: rgb(75 85 99 / 0.10); }
+.dark .group:hover .group-hover\:border-gray-300\/10 { border-color: rgb(75 85 99 / 0.10); }
+.dark .group:hover .group-hover\:bg-gray-300\/15 { background-color: rgb(75 85 99 / 0.15); }
+.dark .group:hover .group-hover\:border-gray-300\/15 { border-color: rgb(75 85 99 / 0.15); }
+.dark .group:hover .group-hover\:bg-gray-300\/20 { background-color: rgb(75 85 99 / 0.20); }
+.dark .group:hover .group-hover\:border-gray-300\/20 { border-color: rgb(75 85 99 / 0.20); }
+.dark .group:hover .group-hover\:bg-gray-300\/25 { background-color: rgb(75 85 99 / 0.25); }
+.dark .group:hover .group-hover\:border-gray-300\/25 { border-color: rgb(75 85 99 / 0.25); }
+.dark .group:hover .group-hover\:bg-gray-300\/30 { background-color: rgb(75 85 99 / 0.30); }
+.dark .group:hover .group-hover\:border-gray-300\/30 { border-color: rgb(75 85 99 / 0.30); }
+.dark .group:hover .group-hover\:bg-gray-300\/35 { background-color: rgb(75 85 99 / 0.35); }
+.dark .group:hover .group-hover\:border-gray-300\/35 { border-color: rgb(75 85 99 / 0.35); }
+.dark .group:hover .group-hover\:bg-gray-300\/40 { background-color: rgb(75 85 99 / 0.40); }
+.dark .group:hover .group-hover\:border-gray-300\/40 { border-color: rgb(75 85 99 / 0.40); }
+.dark .group:hover .group-hover\:bg-gray-300\/45 { background-color: rgb(75 85 99 / 0.45); }
+.dark .group:hover .group-hover\:border-gray-300\/45 { border-color: rgb(75 85 99 / 0.45); }
+.dark .group:hover .group-hover\:bg-gray-300\/50 { background-color: rgb(75 85 99 / 0.50); }
+.dark .group:hover .group-hover\:border-gray-300\/50 { border-color: rgb(75 85 99 / 0.50); }
+.dark .group:hover .group-hover\:bg-gray-300\/55 { background-color: rgb(75 85 99 / 0.55); }
+.dark .group:hover .group-hover\:border-gray-300\/55 { border-color: rgb(75 85 99 / 0.55); }
+.dark .group:hover .group-hover\:bg-gray-300\/60 { background-color: rgb(75 85 99 / 0.60); }
+.dark .group:hover .group-hover\:border-gray-300\/60 { border-color: rgb(75 85 99 / 0.60); }
+.dark .group:hover .group-hover\:bg-gray-300\/65 { background-color: rgb(75 85 99 / 0.65); }
+.dark .group:hover .group-hover\:border-gray-300\/65 { border-color: rgb(75 85 99 / 0.65); }
+.dark .group:hover .group-hover\:bg-gray-300\/70 { background-color: rgb(75 85 99 / 0.70); }
+.dark .group:hover .group-hover\:border-gray-300\/70 { border-color: rgb(75 85 99 / 0.70); }
+.dark .group:hover .group-hover\:bg-gray-300\/75 { background-color: rgb(75 85 99 / 0.75); }
+.dark .group:hover .group-hover\:border-gray-300\/75 { border-color: rgb(75 85 99 / 0.75); }
+.dark .group:hover .group-hover\:bg-gray-300\/80 { background-color: rgb(75 85 99 / 0.80); }
+.dark .group:hover .group-hover\:border-gray-300\/80 { border-color: rgb(75 85 99 / 0.80); }
+.dark .group:hover .group-hover\:bg-gray-300\/85 { background-color: rgb(75 85 99 / 0.85); }
+.dark .group:hover .group-hover\:border-gray-300\/85 { border-color: rgb(75 85 99 / 0.85); }
+.dark .group:hover .group-hover\:bg-gray-300\/90 { background-color: rgb(75 85 99 / 0.90); }
+.dark .group:hover .group-hover\:border-gray-300\/90 { border-color: rgb(75 85 99 / 0.90); }
+.dark .group:hover .group-hover\:bg-gray-300\/95 { background-color: rgb(75 85 99 / 0.95); }
+.dark .group:hover .group-hover\:border-gray-300\/95 { border-color: rgb(75 85 99 / 0.95); }
+.dark .divide-gray-300 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99); }
+.dark .divide-gray-300\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.05); }
+.dark .divide-gray-300\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.10); }
+.dark .divide-gray-300\/15 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.15); }
+.dark .divide-gray-300\/20 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.20); }
+.dark .divide-gray-300\/25 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.25); }
+.dark .divide-gray-300\/30 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.30); }
+.dark .divide-gray-300\/35 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.35); }
+.dark .divide-gray-300\/40 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.40); }
+.dark .divide-gray-300\/45 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.45); }
+.dark .divide-gray-300\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.50); }
+.dark .divide-gray-300\/55 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.55); }
+.dark .divide-gray-300\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.60); }
+.dark .divide-gray-300\/65 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.65); }
+.dark .divide-gray-300\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.70); }
+.dark .divide-gray-300\/75 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.75); }
+.dark .divide-gray-300\/80 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.80); }
+.dark .divide-gray-300\/85 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.85); }
+.dark .divide-gray-300\/90 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.90); }
+.dark .divide-gray-300\/95 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(75 85 99 / 0.95); }
+.dark .bg-sf-50 { background-color: rgb(3 7 18); }
+.dark .border-sf-50 { border-color: rgb(3 7 18); }
+.dark .bg-sf-50\/5 { background-color: rgb(3 7 18 / 0.05); }
+.dark .border-sf-50\/5 { border-color: rgb(3 7 18 / 0.05); }
+.dark .bg-sf-50\/10 { background-color: rgb(3 7 18 / 0.10); }
+.dark .border-sf-50\/10 { border-color: rgb(3 7 18 / 0.10); }
+.dark .bg-sf-50\/15 { background-color: rgb(3 7 18 / 0.15); }
+.dark .border-sf-50\/15 { border-color: rgb(3 7 18 / 0.15); }
+.dark .bg-sf-50\/20 { background-color: rgb(3 7 18 / 0.20); }
+.dark .border-sf-50\/20 { border-color: rgb(3 7 18 / 0.20); }
+.dark .bg-sf-50\/25 { background-color: rgb(3 7 18 / 0.25); }
+.dark .border-sf-50\/25 { border-color: rgb(3 7 18 / 0.25); }
+.dark .bg-sf-50\/30 { background-color: rgb(3 7 18 / 0.30); }
+.dark .border-sf-50\/30 { border-color: rgb(3 7 18 / 0.30); }
+.dark .bg-sf-50\/35 { background-color: rgb(3 7 18 / 0.35); }
+.dark .border-sf-50\/35 { border-color: rgb(3 7 18 / 0.35); }
+.dark .bg-sf-50\/40 { background-color: rgb(3 7 18 / 0.40); }
+.dark .border-sf-50\/40 { border-color: rgb(3 7 18 / 0.40); }
+.dark .bg-sf-50\/45 { background-color: rgb(3 7 18 / 0.45); }
+.dark .border-sf-50\/45 { border-color: rgb(3 7 18 / 0.45); }
+.dark .bg-sf-50\/50 { background-color: rgb(3 7 18 / 0.50); }
+.dark .border-sf-50\/50 { border-color: rgb(3 7 18 / 0.50); }
+.dark .bg-sf-50\/55 { background-color: rgb(3 7 18 / 0.55); }
+.dark .border-sf-50\/55 { border-color: rgb(3 7 18 / 0.55); }
+.dark .bg-sf-50\/60 { background-color: rgb(3 7 18 / 0.60); }
+.dark .border-sf-50\/60 { border-color: rgb(3 7 18 / 0.60); }
+.dark .bg-sf-50\/65 { background-color: rgb(3 7 18 / 0.65); }
+.dark .border-sf-50\/65 { border-color: rgb(3 7 18 / 0.65); }
+.dark .bg-sf-50\/70 { background-color: rgb(3 7 18 / 0.70); }
+.dark .border-sf-50\/70 { border-color: rgb(3 7 18 / 0.70); }
+.dark .bg-sf-50\/75 { background-color: rgb(3 7 18 / 0.75); }
+.dark .border-sf-50\/75 { border-color: rgb(3 7 18 / 0.75); }
+.dark .bg-sf-50\/80 { background-color: rgb(3 7 18 / 0.80); }
+.dark .border-sf-50\/80 { border-color: rgb(3 7 18 / 0.80); }
+.dark .bg-sf-50\/85 { background-color: rgb(3 7 18 / 0.85); }
+.dark .border-sf-50\/85 { border-color: rgb(3 7 18 / 0.85); }
+.dark .bg-sf-50\/90 { background-color: rgb(3 7 18 / 0.90); }
+.dark .border-sf-50\/90 { border-color: rgb(3 7 18 / 0.90); }
+.dark .bg-sf-50\/95 { background-color: rgb(3 7 18 / 0.95); }
+.dark .border-sf-50\/95 { border-color: rgb(3 7 18 / 0.95); }
+.dark .hover\:bg-sf-50:hover { background-color: rgb(3 7 18); }
+.dark .hover\:border-sf-50:hover { border-color: rgb(3 7 18); }
+.dark .hover\:bg-sf-50\/5:hover { background-color: rgb(3 7 18 / 0.05); }
+.dark .hover\:border-sf-50\/5:hover { border-color: rgb(3 7 18 / 0.05); }
+.dark .hover\:bg-sf-50\/10:hover { background-color: rgb(3 7 18 / 0.10); }
+.dark .hover\:border-sf-50\/10:hover { border-color: rgb(3 7 18 / 0.10); }
+.dark .hover\:bg-sf-50\/15:hover { background-color: rgb(3 7 18 / 0.15); }
+.dark .hover\:border-sf-50\/15:hover { border-color: rgb(3 7 18 / 0.15); }
+.dark .hover\:bg-sf-50\/20:hover { background-color: rgb(3 7 18 / 0.20); }
+.dark .hover\:border-sf-50\/20:hover { border-color: rgb(3 7 18 / 0.20); }
+.dark .hover\:bg-sf-50\/25:hover { background-color: rgb(3 7 18 / 0.25); }
+.dark .hover\:border-sf-50\/25:hover { border-color: rgb(3 7 18 / 0.25); }
+.dark .hover\:bg-sf-50\/30:hover { background-color: rgb(3 7 18 / 0.30); }
+.dark .hover\:border-sf-50\/30:hover { border-color: rgb(3 7 18 / 0.30); }
+.dark .hover\:bg-sf-50\/35:hover { background-color: rgb(3 7 18 / 0.35); }
+.dark .hover\:border-sf-50\/35:hover { border-color: rgb(3 7 18 / 0.35); }
+.dark .hover\:bg-sf-50\/40:hover { background-color: rgb(3 7 18 / 0.40); }
+.dark .hover\:border-sf-50\/40:hover { border-color: rgb(3 7 18 / 0.40); }
+.dark .hover\:bg-sf-50\/45:hover { background-color: rgb(3 7 18 / 0.45); }
+.dark .hover\:border-sf-50\/45:hover { border-color: rgb(3 7 18 / 0.45); }
+.dark .hover\:bg-sf-50\/50:hover { background-color: rgb(3 7 18 / 0.50); }
+.dark .hover\:border-sf-50\/50:hover { border-color: rgb(3 7 18 / 0.50); }
+.dark .hover\:bg-sf-50\/55:hover { background-color: rgb(3 7 18 / 0.55); }
+.dark .hover\:border-sf-50\/55:hover { border-color: rgb(3 7 18 / 0.55); }
+.dark .hover\:bg-sf-50\/60:hover { background-color: rgb(3 7 18 / 0.60); }
+.dark .hover\:border-sf-50\/60:hover { border-color: rgb(3 7 18 / 0.60); }
+.dark .hover\:bg-sf-50\/65:hover { background-color: rgb(3 7 18 / 0.65); }
+.dark .hover\:border-sf-50\/65:hover { border-color: rgb(3 7 18 / 0.65); }
+.dark .hover\:bg-sf-50\/70:hover { background-color: rgb(3 7 18 / 0.70); }
+.dark .hover\:border-sf-50\/70:hover { border-color: rgb(3 7 18 / 0.70); }
+.dark .hover\:bg-sf-50\/75:hover { background-color: rgb(3 7 18 / 0.75); }
+.dark .hover\:border-sf-50\/75:hover { border-color: rgb(3 7 18 / 0.75); }
+.dark .hover\:bg-sf-50\/80:hover { background-color: rgb(3 7 18 / 0.80); }
+.dark .hover\:border-sf-50\/80:hover { border-color: rgb(3 7 18 / 0.80); }
+.dark .hover\:bg-sf-50\/85:hover { background-color: rgb(3 7 18 / 0.85); }
+.dark .hover\:border-sf-50\/85:hover { border-color: rgb(3 7 18 / 0.85); }
+.dark .hover\:bg-sf-50\/90:hover { background-color: rgb(3 7 18 / 0.90); }
+.dark .hover\:border-sf-50\/90:hover { border-color: rgb(3 7 18 / 0.90); }
+.dark .hover\:bg-sf-50\/95:hover { background-color: rgb(3 7 18 / 0.95); }
+.dark .hover\:border-sf-50\/95:hover { border-color: rgb(3 7 18 / 0.95); }
+.dark .focus\:bg-sf-50:focus { background-color: rgb(3 7 18); }
+.dark .focus\:border-sf-50:focus { border-color: rgb(3 7 18); }
+.dark .focus\:bg-sf-50\/5:focus { background-color: rgb(3 7 18 / 0.05); }
+.dark .focus\:border-sf-50\/5:focus { border-color: rgb(3 7 18 / 0.05); }
+.dark .focus\:bg-sf-50\/10:focus { background-color: rgb(3 7 18 / 0.10); }
+.dark .focus\:border-sf-50\/10:focus { border-color: rgb(3 7 18 / 0.10); }
+.dark .focus\:bg-sf-50\/15:focus { background-color: rgb(3 7 18 / 0.15); }
+.dark .focus\:border-sf-50\/15:focus { border-color: rgb(3 7 18 / 0.15); }
+.dark .focus\:bg-sf-50\/20:focus { background-color: rgb(3 7 18 / 0.20); }
+.dark .focus\:border-sf-50\/20:focus { border-color: rgb(3 7 18 / 0.20); }
+.dark .focus\:bg-sf-50\/25:focus { background-color: rgb(3 7 18 / 0.25); }
+.dark .focus\:border-sf-50\/25:focus { border-color: rgb(3 7 18 / 0.25); }
+.dark .focus\:bg-sf-50\/30:focus { background-color: rgb(3 7 18 / 0.30); }
+.dark .focus\:border-sf-50\/30:focus { border-color: rgb(3 7 18 / 0.30); }
+.dark .focus\:bg-sf-50\/35:focus { background-color: rgb(3 7 18 / 0.35); }
+.dark .focus\:border-sf-50\/35:focus { border-color: rgb(3 7 18 / 0.35); }
+.dark .focus\:bg-sf-50\/40:focus { background-color: rgb(3 7 18 / 0.40); }
+.dark .focus\:border-sf-50\/40:focus { border-color: rgb(3 7 18 / 0.40); }
+.dark .focus\:bg-sf-50\/45:focus { background-color: rgb(3 7 18 / 0.45); }
+.dark .focus\:border-sf-50\/45:focus { border-color: rgb(3 7 18 / 0.45); }
+.dark .focus\:bg-sf-50\/50:focus { background-color: rgb(3 7 18 / 0.50); }
+.dark .focus\:border-sf-50\/50:focus { border-color: rgb(3 7 18 / 0.50); }
+.dark .focus\:bg-sf-50\/55:focus { background-color: rgb(3 7 18 / 0.55); }
+.dark .focus\:border-sf-50\/55:focus { border-color: rgb(3 7 18 / 0.55); }
+.dark .focus\:bg-sf-50\/60:focus { background-color: rgb(3 7 18 / 0.60); }
+.dark .focus\:border-sf-50\/60:focus { border-color: rgb(3 7 18 / 0.60); }
+.dark .focus\:bg-sf-50\/65:focus { background-color: rgb(3 7 18 / 0.65); }
+.dark .focus\:border-sf-50\/65:focus { border-color: rgb(3 7 18 / 0.65); }
+.dark .focus\:bg-sf-50\/70:focus { background-color: rgb(3 7 18 / 0.70); }
+.dark .focus\:border-sf-50\/70:focus { border-color: rgb(3 7 18 / 0.70); }
+.dark .focus\:bg-sf-50\/75:focus { background-color: rgb(3 7 18 / 0.75); }
+.dark .focus\:border-sf-50\/75:focus { border-color: rgb(3 7 18 / 0.75); }
+.dark .focus\:bg-sf-50\/80:focus { background-color: rgb(3 7 18 / 0.80); }
+.dark .focus\:border-sf-50\/80:focus { border-color: rgb(3 7 18 / 0.80); }
+.dark .focus\:bg-sf-50\/85:focus { background-color: rgb(3 7 18 / 0.85); }
+.dark .focus\:border-sf-50\/85:focus { border-color: rgb(3 7 18 / 0.85); }
+.dark .focus\:bg-sf-50\/90:focus { background-color: rgb(3 7 18 / 0.90); }
+.dark .focus\:border-sf-50\/90:focus { border-color: rgb(3 7 18 / 0.90); }
+.dark .focus\:bg-sf-50\/95:focus { background-color: rgb(3 7 18 / 0.95); }
+.dark .focus\:border-sf-50\/95:focus { border-color: rgb(3 7 18 / 0.95); }
+.dark .group:hover .group-hover\:bg-sf-50 { background-color: rgb(3 7 18); }
+.dark .group:hover .group-hover\:border-sf-50 { border-color: rgb(3 7 18); }
+.dark .group:hover .group-hover\:bg-sf-50\/5 { background-color: rgb(3 7 18 / 0.05); }
+.dark .group:hover .group-hover\:border-sf-50\/5 { border-color: rgb(3 7 18 / 0.05); }
+.dark .group:hover .group-hover\:bg-sf-50\/10 { background-color: rgb(3 7 18 / 0.10); }
+.dark .group:hover .group-hover\:border-sf-50\/10 { border-color: rgb(3 7 18 / 0.10); }
+.dark .group:hover .group-hover\:bg-sf-50\/15 { background-color: rgb(3 7 18 / 0.15); }
+.dark .group:hover .group-hover\:border-sf-50\/15 { border-color: rgb(3 7 18 / 0.15); }
+.dark .group:hover .group-hover\:bg-sf-50\/20 { background-color: rgb(3 7 18 / 0.20); }
+.dark .group:hover .group-hover\:border-sf-50\/20 { border-color: rgb(3 7 18 / 0.20); }
+.dark .group:hover .group-hover\:bg-sf-50\/25 { background-color: rgb(3 7 18 / 0.25); }
+.dark .group:hover .group-hover\:border-sf-50\/25 { border-color: rgb(3 7 18 / 0.25); }
+.dark .group:hover .group-hover\:bg-sf-50\/30 { background-color: rgb(3 7 18 / 0.30); }
+.dark .group:hover .group-hover\:border-sf-50\/30 { border-color: rgb(3 7 18 / 0.30); }
+.dark .group:hover .group-hover\:bg-sf-50\/35 { background-color: rgb(3 7 18 / 0.35); }
+.dark .group:hover .group-hover\:border-sf-50\/35 { border-color: rgb(3 7 18 / 0.35); }
+.dark .group:hover .group-hover\:bg-sf-50\/40 { background-color: rgb(3 7 18 / 0.40); }
+.dark .group:hover .group-hover\:border-sf-50\/40 { border-color: rgb(3 7 18 / 0.40); }
+.dark .group:hover .group-hover\:bg-sf-50\/45 { background-color: rgb(3 7 18 / 0.45); }
+.dark .group:hover .group-hover\:border-sf-50\/45 { border-color: rgb(3 7 18 / 0.45); }
+.dark .group:hover .group-hover\:bg-sf-50\/50 { background-color: rgb(3 7 18 / 0.50); }
+.dark .group:hover .group-hover\:border-sf-50\/50 { border-color: rgb(3 7 18 / 0.50); }
+.dark .group:hover .group-hover\:bg-sf-50\/55 { background-color: rgb(3 7 18 / 0.55); }
+.dark .group:hover .group-hover\:border-sf-50\/55 { border-color: rgb(3 7 18 / 0.55); }
+.dark .group:hover .group-hover\:bg-sf-50\/60 { background-color: rgb(3 7 18 / 0.60); }
+.dark .group:hover .group-hover\:border-sf-50\/60 { border-color: rgb(3 7 18 / 0.60); }
+.dark .group:hover .group-hover\:bg-sf-50\/65 { background-color: rgb(3 7 18 / 0.65); }
+.dark .group:hover .group-hover\:border-sf-50\/65 { border-color: rgb(3 7 18 / 0.65); }
+.dark .group:hover .group-hover\:bg-sf-50\/70 { background-color: rgb(3 7 18 / 0.70); }
+.dark .group:hover .group-hover\:border-sf-50\/70 { border-color: rgb(3 7 18 / 0.70); }
+.dark .group:hover .group-hover\:bg-sf-50\/75 { background-color: rgb(3 7 18 / 0.75); }
+.dark .group:hover .group-hover\:border-sf-50\/75 { border-color: rgb(3 7 18 / 0.75); }
+.dark .group:hover .group-hover\:bg-sf-50\/80 { background-color: rgb(3 7 18 / 0.80); }
+.dark .group:hover .group-hover\:border-sf-50\/80 { border-color: rgb(3 7 18 / 0.80); }
+.dark .group:hover .group-hover\:bg-sf-50\/85 { background-color: rgb(3 7 18 / 0.85); }
+.dark .group:hover .group-hover\:border-sf-50\/85 { border-color: rgb(3 7 18 / 0.85); }
+.dark .group:hover .group-hover\:bg-sf-50\/90 { background-color: rgb(3 7 18 / 0.90); }
+.dark .group:hover .group-hover\:border-sf-50\/90 { border-color: rgb(3 7 18 / 0.90); }
+.dark .group:hover .group-hover\:bg-sf-50\/95 { background-color: rgb(3 7 18 / 0.95); }
+.dark .group:hover .group-hover\:border-sf-50\/95 { border-color: rgb(3 7 18 / 0.95); }
+.dark .divide-sf-50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18); }
+.dark .divide-sf-50\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.05); }
+.dark .divide-sf-50\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.10); }
+.dark .divide-sf-50\/15 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.15); }
+.dark .divide-sf-50\/20 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.20); }
+.dark .divide-sf-50\/25 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.25); }
+.dark .divide-sf-50\/30 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.30); }
+.dark .divide-sf-50\/35 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.35); }
+.dark .divide-sf-50\/40 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.40); }
+.dark .divide-sf-50\/45 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.45); }
+.dark .divide-sf-50\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.50); }
+.dark .divide-sf-50\/55 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.55); }
+.dark .divide-sf-50\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.60); }
+.dark .divide-sf-50\/65 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.65); }
+.dark .divide-sf-50\/70 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.70); }
+.dark .divide-sf-50\/75 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.75); }
+.dark .divide-sf-50\/80 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.80); }
+.dark .divide-sf-50\/85 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.85); }
+.dark .divide-sf-50\/90 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.90); }
+.dark .divide-sf-50\/95 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(3 7 18 / 0.95); }
+.dark .text-gray-900 { color: rgb(243 244 246); }
+.dark .hover\:text-gray-900:hover { color: rgb(243 244 246); }
+.dark .group:hover .group-hover\:text-gray-900 { color: rgb(243 244 246); }
+.dark .text-gray-800 { color: rgb(229 231 235); }
+.dark .hover\:text-gray-800:hover { color: rgb(229 231 235); }
+.dark .group:hover .group-hover\:text-gray-800 { color: rgb(229 231 235); }
+.dark .text-gray-700 { color: rgb(209 213 219); }
+.dark .hover\:text-gray-700:hover { color: rgb(209 213 219); }
+.dark .group:hover .group-hover\:text-gray-700 { color: rgb(209 213 219); }
+.dark .text-gray-600 { color: rgb(156 163 175); }
+.dark .hover\:text-gray-600:hover { color: rgb(156 163 175); }
+.dark .group:hover .group-hover\:text-gray-600 { color: rgb(156 163 175); }
+.dark .text-gray-500 { color: rgb(156 163 175); }
+.dark .hover\:text-gray-500:hover { color: rgb(156 163 175); }
+.dark .group:hover .group-hover\:text-gray-500 { color: rgb(156 163 175); }
+.dark .text-gray-400 { color: rgb(107 114 128); }
+.dark .hover\:text-gray-400:hover { color: rgb(107 114 128); }
+.dark .group:hover .group-hover\:text-gray-400 { color: rgb(107 114 128); }
+.dark .text-slate-500 { color: rgb(156 163 175); }
+.dark .hover\:text-slate-500:hover { color: rgb(156 163 175); }
+.dark .group:hover .group-hover\:text-slate-500 { color: rgb(156 163 175); }
+.dark .text-slate-400 { color: rgb(107 114 128); }
+.dark .hover\:text-slate-400:hover { color: rgb(107 114 128); }
+.dark .group:hover .group-hover\:text-slate-400 { color: rgb(107 114 128); }
+.dark .border-slate-400 { border-color: rgb(107 114 128); }
+.dark .border-slate-500 { border-color: rgb(156 163 175); }
+.dark .border-slate-300 { border-color: rgb(75 85 99); }
+.dark .placeholder-gray-400::placeholder { color: rgb(107 114 128); }
+.dark .placeholder-gray-300::placeholder { color: rgb(107 114 128); }
+
+/* ===== Dark-mode overrides for brand (sf*) and standard saturated-color badge/button classes actually used in the app ===== */
+/* Pastel chip/badge backgrounds (shades 50-400) and outline borders get a translucent dark tint; solid */
+/* buttons/checkboxes (shade >=500 bg, >=400 border with no explicit opacity) are intentionally left untouched */
+/* since saturated colors with white text already look correct on a dark background. */
+.dark .bg-sf-50 { background-color: rgb(27 150 255 / 0.08); }
+.dark .text-red-600 { color: rgb(248 113 113); }
+.dark .text-emerald-600 { color: rgb(52 211 153); }
+.dark .text-yellow-600 { color: rgb(250 204 21); }
+.dark .bg-red-50\/20 { background-color: rgb(239 68 68 / 0.20); }
+.dark .border-red-200\/30 { border-color: rgb(248 113 113 / 0.30); }
+.dark .text-red-700\/80 { color: rgb(252 165 165 / 0.80); }
+.dark .text-emerald-600\/80 { color: rgb(52 211 153 / 0.80); }
+.dark .bg-blue-50\/50 { background-color: rgb(59 130 246 / 0.50); }
+.dark .bg-blue-500\/10 { background-color: rgb(59 130 246 / 0.10); }
+.dark .border-blue-200\/40 { border-color: rgb(96 165 250 / 0.40); }
+.dark .border-blue-400\/30 { border-color: rgb(96 165 250 / 0.30); }
+.dark .text-blue-600 { color: rgb(96 165 250); }
+.dark .text-blue-400 { color: rgb(96 165 250); }
+.dark .hover\:text-blue-700:hover { color: rgb(147 197 253); }
+.dark .hover\:text-blue-300:hover { color: rgb(147 197 253); }
+.dark .bg-blue-100 { background-color: rgb(59 130 246 / 0.12); }
+.dark .bg-blue-500\/20 { background-color: rgb(59 130 246 / 0.20); }
+.dark .text-blue-300 { color: rgb(147 197 253); }
+.dark .border-blue-200 { border-color: rgb(96 165 250 / 0.30); }
+.dark .text-cyan-600 { color: rgb(34 211 238); }
+.dark .hover\:text-cyan-700:hover { color: rgb(103 232 249); }
+.dark .hover\:border-cyan-300\/50:hover { border-color: rgb(34 211 238 / 0.50); }
+.dark .border-red-200\/40 { border-color: rgb(248 113 113 / 0.40); }
+.dark .text-red-600\/90 { color: rgb(248 113 113 / 0.90); }
+.dark .focus\:border-blue-300\/40:focus { border-color: rgb(96 165 250 / 0.40); }
+.dark .bg-blue-50\/20 { background-color: rgb(59 130 246 / 0.20); }
+.dark .border-blue-200\/30 { border-color: rgb(96 165 250 / 0.30); }
+.dark .hover\:text-red-600:hover { color: rgb(248 113 113); }
+.dark .focus\:border-blue-300\/50:focus { border-color: rgb(96 165 250 / 0.50); }
+.dark .border-blue-300\/40 { border-color: rgb(96 165 250 / 0.40); }
+.dark .text-blue-700 { color: rgb(147 197 253); }
+.dark .hover\:bg-blue-600\/30:hover { background-color: rgb(59 130 246 / 0.30); }
+.dark .text-purple-600 { color: rgb(192 132 252); }
+.dark .bg-purple-100 { background-color: rgb(168 85 247 / 0.12); }
+.dark .focus\:border-purple-300\/40:focus { border-color: rgb(192 132 252 / 0.40); }
+.dark .bg-purple-50\/20 { background-color: rgb(168 85 247 / 0.20); }
+.dark .border-purple-200\/30 { border-color: rgb(192 132 252 / 0.30); }
+.dark .focus\:border-purple-300\/50:focus { border-color: rgb(192 132 252 / 0.50); }
+.dark .border-purple-300\/40 { border-color: rgb(192 132 252 / 0.40); }
+.dark .text-purple-700 { color: rgb(216 180 254); }
+.dark .hover\:bg-purple-600\/30:hover { background-color: rgb(168 85 247 / 0.30); }
+.dark .bg-red-50\/30 { background-color: rgb(239 68 68 / 0.30); }
+.dark .border-red-200\/50 { border-color: rgb(248 113 113 / 0.50); }
+.dark .bg-emerald-50\/30 { background-color: rgb(16 185 129 / 0.30); }
+.dark .border-emerald-200\/50 { border-color: rgb(52 211 153 / 0.50); }
+.dark .bg-blue-50\/30 { background-color: rgb(59 130 246 / 0.30); }
+.dark .bg-green-50\/30 { background-color: rgb(34 197 94 / 0.30); }
+.dark .text-green-700 { color: rgb(134 239 172); }
+.dark .border-green-200\/40 { border-color: rgb(74 222 128 / 0.40); }
+.dark .bg-purple-50\/30 { background-color: rgb(168 85 247 / 0.30); }
+.dark .border-purple-200\/40 { border-color: rgb(192 132 252 / 0.40); }
+.dark .bg-emerald-50 { background-color: rgb(16 185 129 / 0.08); }
+.dark .border-emerald-300\/40 { border-color: rgb(52 211 153 / 0.40); }
+.dark .border-emerald-300\/50 { border-color: rgb(52 211 153 / 0.50); }
+.dark .bg-emerald-50\/10 { background-color: rgb(16 185 129 / 0.10); }
+.dark .bg-emerald-50\/50 { background-color: rgb(16 185 129 / 0.50); }
+.dark .border-emerald-200\/40 { border-color: rgb(52 211 153 / 0.40); }
+.dark .text-red-700 { color: rgb(252 165 165); }
+.dark .focus\:border-emerald-300\/50:focus { border-color: rgb(52 211 153 / 0.50); }
+.dark .bg-emerald-100 { background-color: rgb(16 185 129 / 0.12); }
+.dark .text-emerald-700 { color: rgb(110 231 183); }
+.dark .hover\:text-emerald-700:hover { color: rgb(110 231 183); }
+.dark .border-red-300 { border-color: rgb(248 113 113 / 0.40); }
+.dark .text-red-500 { color: rgb(248 113 113); }
+.dark .hover\:bg-emerald-600\/30:hover { background-color: rgb(16 185 129 / 0.30); }
+.dark .bg-red-100 { background-color: rgb(239 68 68 / 0.12); }
+.dark .border-red-300\/50 { border-color: rgb(248 113 113 / 0.50); }
+.dark .hover\:bg-red-600\/30:hover { background-color: rgb(239 68 68 / 0.30); }
+.dark .text-emerald-500 { color: rgb(52 211 153); }
+.dark .bg-red-50\/60 { background-color: rgb(239 68 68 / 0.60); }
+.dark .bg-yellow-50\/30 { background-color: rgb(234 179 8 / 0.30); }
+.dark .border-yellow-200\/40 { border-color: rgb(250 204 21 / 0.40); }
+.dark .text-yellow-600\/90 { color: rgb(250 204 21 / 0.90); }
+.dark .text-yellow-500\/80 { color: rgb(250 204 21 / 0.80); }
+.dark .focus\:border-red-300\/50:focus { border-color: rgb(248 113 113 / 0.50); }
+.dark .bg-green-400 { background-color: rgb(34 197 94 / 0.35); }
+.dark .bg-yellow-400 { background-color: rgb(234 179 8 / 0.35); }
+.dark .bg-green-100\/40 { background-color: rgb(34 197 94 / 0.40); }
+.dark .text-green-500 { color: rgb(74 222 128); }
+.dark .bg-yellow-100\/40 { background-color: rgb(234 179 8 / 0.40); }
+.dark .text-yellow-500 { color: rgb(250 204 21); }
+.dark .bg-blue-600\/30 { background-color: rgb(59 130 246 / 0.30); }
+.dark .border-blue-300\/50 { border-color: rgb(96 165 250 / 0.50); }
+.dark .text-emerald-600\/70 { color: rgb(52 211 153 / 0.70); }
+.dark .text-yellow-600\/80 { color: rgb(250 204 21 / 0.80); }
+.dark .bg-emerald-50\/40 { background-color: rgb(16 185 129 / 0.40); }
+.dark .border-emerald-300\/60 { border-color: rgb(52 211 153 / 0.60); }
+.dark .bg-blue-50\/40 { background-color: rgb(59 130 246 / 0.40); }
+.dark .border-blue-300\/60 { border-color: rgb(96 165 250 / 0.60); }
+.dark .text-red-500\/80 { color: rgb(248 113 113 / 0.80); }
+.dark .bg-yellow-50\/20 { background-color: rgb(234 179 8 / 0.20); }
+.dark .bg-orange-100 { background-color: rgb(249 115 22 / 0.12); }
+.dark .border-orange-300\/40 { border-color: rgb(251 146 60 / 0.40); }
+.dark .text-orange-700 { color: rgb(253 186 116); }
+.dark .bg-yellow-50\/10 { background-color: rgb(234 179 8 / 0.10); }
+.dark .bg-yellow-100 { background-color: rgb(234 179 8 / 0.12); }
+.dark .text-amber-600 { color: rgb(251 191 36); }
+.dark .border-red-300\/40 { border-color: rgb(248 113 113 / 0.40); }
+.dark .text-orange-600 { color: rgb(251 146 60); }
+.dark .text-rose-600 { color: rgb(251 113 133); }
+.dark .text-red-700\/85 { color: rgb(252 165 165 / 0.85); }
+.dark .bg-red-50\/10 { background-color: rgb(239 68 68 / 0.10); }
+.dark .bg-red-50 { background-color: rgb(239 68 68 / 0.08); }
+.dark .bg-emerald-50\/20 { background-color: rgb(16 185 129 / 0.20); }
+.dark .border-emerald-200\/30 { border-color: rgb(52 211 153 / 0.30); }
+.dark .hover\:bg-red-50\/40:hover { background-color: rgb(239 68 68 / 0.40); }
+.dark .text-blue-500 { color: rgb(96 165 250); }
+.dark .text-blue-700\/80 { color: rgb(147 197 253 / 0.80); }
+.dark .bg-purple-50 { background-color: rgb(168 85 247 / 0.08); }
+.dark .hover\:text-purple-700:hover { color: rgb(216 180 254); }
+.dark .hover\:border-purple-300\/50:hover { border-color: rgb(192 132 252 / 0.50); }
+.dark .bg-blue-400 { background-color: rgb(59 130 246 / 0.35); }
+.dark .text-green-500\/80 { color: rgb(74 222 128 / 0.80); }
+.dark .text-green-400\/90 { color: rgb(74 222 128 / 0.90); }
+.dark .bg-green-100\/60 { background-color: rgb(34 197 94 / 0.60); }
+.dark .bg-green-500\/20 { background-color: rgb(34 197 94 / 0.20); }
+.dark .border-green-300 { border-color: rgb(74 222 128 / 0.40); }
+.dark .border-green-400\/40 { border-color: rgb(74 222 128 / 0.40); }
+.dark .text-yellow-400\/90 { color: rgb(250 204 21 / 0.90); }
+.dark .bg-yellow-100\/60 { background-color: rgb(234 179 8 / 0.60); }
+.dark .bg-yellow-500\/20 { background-color: rgb(234 179 8 / 0.20); }
+.dark .border-yellow-300 { border-color: rgb(250 204 21 / 0.40); }
+.dark .border-yellow-400\/40 { border-color: rgb(250 204 21 / 0.40); }
+.dark .bg-blue-100\/60 { background-color: rgb(59 130 246 / 0.60); }
+.dark .border-blue-300 { border-color: rgb(96 165 250 / 0.40); }
+.dark .border-blue-400\/40 { border-color: rgb(96 165 250 / 0.40); }
+.dark .text-blue-600\/70 { color: rgb(96 165 250 / 0.70); }
+.dark .text-blue-400\/80 { color: rgb(96 165 250 / 0.80); }
+.dark .bg-green-50\/50 { background-color: rgb(34 197 94 / 0.50); }
+.dark .bg-green-500\/10 { background-color: rgb(34 197 94 / 0.10); }
+.dark .border-green-400\/30 { border-color: rgb(74 222 128 / 0.30); }
+.dark .text-green-600 { color: rgb(74 222 128); }
+.dark .text-green-400 { color: rgb(74 222 128); }
+.dark .bg-green-50\/40 { background-color: rgb(34 197 94 / 0.40); }
+.dark .border-green-200\/50 { border-color: rgb(74 222 128 / 0.50); }
+.dark .hover\:bg-green-50\/70:hover { background-color: rgb(34 197 94 / 0.70); }
+.dark .hover\:bg-green-500\/20:hover { background-color: rgb(34 197 94 / 0.20); }
+.dark .bg-yellow-50\/40 { background-color: rgb(234 179 8 / 0.40); }
+.dark .bg-yellow-500\/10 { background-color: rgb(234 179 8 / 0.10); }
+.dark .text-yellow-400 { color: rgb(250 204 21); }
+.dark .border-yellow-200\/50 { border-color: rgb(250 204 21 / 0.50); }
+.dark .border-yellow-400\/30 { border-color: rgb(250 204 21 / 0.30); }
+.dark .hover\:bg-yellow-50\/70:hover { background-color: rgb(234 179 8 / 0.70); }
+.dark .hover\:bg-yellow-500\/20:hover { background-color: rgb(234 179 8 / 0.20); }
+.dark .text-red-500\/70 { color: rgb(248 113 113 / 0.70); }
+.dark .text-red-400\/80 { color: rgb(248 113 113 / 0.80); }
+.dark .hover\:text-red-400:hover { color: rgb(248 113 113); }
+.dark .text-green-500\/70 { color: rgb(74 222 128 / 0.70); }
+.dark .text-green-400\/80 { color: rgb(74 222 128 / 0.80); }
+.dark .bg-green-100 { background-color: rgb(34 197 94 / 0.12); }
+.dark .text-green-300 { color: rgb(134 239 172); }
+.dark .border-green-200 { border-color: rgb(74 222 128 / 0.30); }
+.dark .text-yellow-500\/70 { color: rgb(250 204 21 / 0.70); }
+.dark .text-yellow-400\/80 { color: rgb(250 204 21 / 0.80); }
+.dark .text-yellow-300 { color: rgb(253 224 71); }
+.dark .border-yellow-200 { border-color: rgb(250 204 21 / 0.30); }
+.dark .bg-yellow-100\/30 { background-color: rgb(234 179 8 / 0.30); }
+.dark .text-yellow-700 { color: rgb(253 224 71); }
+.dark .bg-red-100\/30 { background-color: rgb(239 68 68 / 0.30); }
+.dark .text-sfgreen-600 { color: rgb(69 198 90); }
+.dark .text-sfred-600 { color: rgb(224 57 74); }
+.dark .text-sforange-600 { color: rgb(254 147 57); }
+.dark .text-sf-600 { color: rgb(79 176 246); }
+.dark .text-sfred-500 { color: rgb(224 57 74); }
+.dark .hover\:text-sfred-600:hover { color: rgb(224 57 74); }
+.dark .bg-sfpurple-500\/20 { background-color: rgb(142 78 198 / 0.20); }
+.dark .text-sfpurple-600 { color: rgb(154 86 212); }
+.dark .border-sfpurple-500\/30 { border-color: rgb(154 86 212 / 0.30); }
+.dark .bg-sf-500\/10 { background-color: rgb(27 150 255 / 0.10); }
+.dark .border-sf-500\/40 { border-color: rgb(79 176 246 / 0.40); }
+.dark .text-sf-700 { color: rgb(124 195 250); }
+.dark .hover\:bg-sf-500\/20:hover { background-color: rgb(27 150 255 / 0.20); }
+.dark .bg-sfgreen-500\/10 { background-color: rgb(46 138 74 / 0.10); }
+.dark .border-sfgreen-500\/40 { border-color: rgb(69 198 90 / 0.40); }
+.dark .text-sfgreen-700 { color: rgb(94 203 140); }
+.dark .hover\:bg-sfgreen-500\/20:hover { background-color: rgb(46 138 74 / 0.20); }
+.dark .hover\:text-sfred-400:hover { color: rgb(224 57 74); }
+.dark .bg-yellow-50\/50 { background-color: rgb(234 179 8 / 0.50); }
+.dark .border-yellow-300\/50 { border-color: rgb(250 204 21 / 0.50); }
+.dark .bg-red-50\/50 { background-color: rgb(239 68 68 / 0.50); }
+.dark .border-cyan-300\/60 { border-color: rgb(34 211 238 / 0.60); }
+.dark .text-cyan-700 { color: rgb(103 232 249); }
+.dark .bg-orange-50\/20 { background-color: rgb(249 115 22 / 0.20); }
+.dark .border-orange-200\/40 { border-color: rgb(251 146 60 / 0.40); }
+.dark .text-orange-600\/80 { color: rgb(251 146 60 / 0.80); }
+.dark .text-emerald-600\/60 { color: rgb(52 211 153 / 0.60); }
+.dark .text-indigo-600 { color: rgb(129 140 248); }
+.dark .bg-indigo-50\/30 { background-color: rgb(99 102 241 / 0.30); }
+.dark .border-indigo-200\/40 { border-color: rgb(129 140 248 / 0.40); }
+.dark .text-indigo-600\/70 { color: rgb(129 140 248 / 0.70); }
+.dark .text-red-600\/80 { color: rgb(248 113 113 / 0.80); }
+.dark .hover\:text-red-700:hover { color: rgb(252 165 165); }
+.dark .text-emerald-600\/90 { color: rgb(52 211 153 / 0.90); }
+.dark .bg-emerald-400 { background-color: rgb(16 185 129 / 0.35); }
+.dark .focus\:border-cyan-300\/50:focus { border-color: rgb(34 211 238 / 0.50); }
+.dark .bg-purple-50\/50 { background-color: rgb(168 85 247 / 0.50); }
+.dark .border-purple-300\/50 { border-color: rgb(192 132 252 / 0.50); }
+.dark .bg-indigo-50\/50 { background-color: rgb(99 102 241 / 0.50); }
+.dark .text-indigo-700 { color: rgb(165 180 252); }
+.dark .border-indigo-300\/50 { border-color: rgb(129 140 248 / 0.50); }
+.dark .bg-blue-100\/30 { background-color: rgb(59 130 246 / 0.30); }
+.dark .hover\:bg-blue-100\/50:hover { background-color: rgb(59 130 246 / 0.50); }
+.dark .bg-blue-700\/80 { background-color: rgb(59 130 246 / 0.80); }
+.dark .hover\:bg-emerald-100:hover { background-color: rgb(16 185 129 / 0.12); }
+.dark .bg-indigo-50 { background-color: rgb(99 102 241 / 0.08); }
+.dark .border-indigo-300\/40 { border-color: rgb(129 140 248 / 0.40); }
+.dark .hover\:bg-indigo-100:hover { background-color: rgb(99 102 241 / 0.12); }
+.dark .border-yellow-300\/40 { border-color: rgb(250 204 21 / 0.40); }
+.dark .hover\:bg-yellow-100\/50:hover { background-color: rgb(234 179 8 / 0.50); }
+.dark .text-red-600\/70 { color: rgb(248 113 113 / 0.70); }
+.dark .hover\:bg-red-100\/50:hover { background-color: rgb(239 68 68 / 0.50); }
+.dark .text-sf-400 { color: rgb(79 176 246); }
+.dark .hover\:text-sf-700:hover { color: rgb(124 195 250); }
+.dark .hover\:text-sf-300:hover { color: rgb(124 195 250); }
+.dark .border-red-200 { border-color: rgb(248 113 113 / 0.30); }
+.dark .border-purple-200 { border-color: rgb(192 132 252 / 0.30); }
+.dark .border-orange-200 { border-color: rgb(251 146 60 / 0.30); }
+.dark .bg-cyan-100 { background-color: rgb(6 182 212 / 0.12); }
+.dark .border-cyan-200 { border-color: rgb(34 211 238 / 0.30); }
+.dark .text-emerald-400 { color: rgb(52 211 153); }
+.dark .text-red-400 { color: rgb(248 113 113); }
+.dark .bg-emerald-950\/80 { background-color: rgb(16 185 129 / 0.80); }
+.dark .border-emerald-700\/60 { border-color: rgb(52 211 153 / 0.60); }
+.dark .text-emerald-200 { color: rgb(52 211 153); }
+.dark .bg-red-950\/80 { background-color: rgb(239 68 68 / 0.80); }
+.dark .border-red-700\/60 { border-color: rgb(248 113 113 / 0.60); }
+.dark .text-red-200 { color: rgb(248 113 113); }
+.dark .bg-yellow-950\/80 { background-color: rgb(234 179 8 / 0.80); }
+.dark .border-yellow-700\/60 { border-color: rgb(250 204 21 / 0.60); }
+.dark .text-yellow-200 { color: rgb(250 204 21); }
+.dark .bg-blue-950\/80 { background-color: rgb(59 130 246 / 0.80); }
+.dark .border-blue-700\/60 { border-color: rgb(96 165 250 / 0.60); }
+.dark .text-blue-200 { color: rgb(96 165 250); }
+.dark .bg-green-50 { background-color: rgb(34 197 94 / 0.08); }
+.dark .border-green-300\/40 { border-color: rgb(74 222 128 / 0.40); }
+.dark .bg-yellow-50 { background-color: rgb(234 179 8 / 0.08); }
+.dark .bg-blue-50 { background-color: rgb(59 130 246 / 0.08); }
+.dark .border-green-300\/50 { border-color: rgb(74 222 128 / 0.50); }
+.dark .hover\:bg-green-800\/60:hover { background-color: rgb(34 197 94 / 0.60); }
+.dark .bg-red-100\/40 { background-color: rgb(239 68 68 / 0.40); }
+.dark .hover\:bg-red-800\/60:hover { background-color: rgb(239 68 68 / 0.60); }
+.dark .hover\:bg-red-100\/40:hover { background-color: rgb(239 68 68 / 0.40); }
+.dark .hover\:border-red-300\/50:hover { border-color: rgb(248 113 113 / 0.50); }
+.dark .bg-blue-600\/10 { background-color: rgb(59 130 246 / 0.10); }
+.dark .text-orange-600\/60 { color: rgb(251 146 60 / 0.60); }
+.dark .hover\:text-orange-700:hover { color: rgb(253 186 116); }
+.dark .hover\:bg-orange-100\/30:hover { background-color: rgb(249 115 22 / 0.30); }
+.dark .border-cyan-200\/40 { border-color: rgb(34 211 238 / 0.40); }
+.dark .bg-cyan-50\/30 { background-color: rgb(6 182 212 / 0.30); }
+.dark .border-blue-200\/50 { border-color: rgb(96 165 250 / 0.50); }
+.dark .border-purple-200\/50 { border-color: rgb(192 132 252 / 0.50); }
+.dark .bg-blue-100\/10 { background-color: rgb(59 130 246 / 0.10); }
+.dark .bg-purple-100\/10 { background-color: rgb(168 85 247 / 0.10); }
+.dark .bg-blue-500\/15 { background-color: rgb(59 130 246 / 0.15); }
+.dark .bg-purple-500\/15 { background-color: rgb(168 85 247 / 0.15); }
+.dark .bg-blue-50\/60 { background-color: rgb(59 130 246 / 0.60); }
+.dark .bg-purple-50\/60 { background-color: rgb(168 85 247 / 0.60); }
+.dark .bg-purple-50\/40 { background-color: rgb(168 85 247 / 0.40); }
+.dark .text-yellow-600\/70 { color: rgb(250 204 21 / 0.70); }
+.dark .bg-emerald-50\/60 { background-color: rgb(16 185 129 / 0.60); }
+.dark .bg-cyan-50\/50 { background-color: rgb(6 182 212 / 0.50); }
+.dark .border-cyan-300\/50 { border-color: rgb(34 211 238 / 0.50); }
+.dark .bg-red-50\/40 { background-color: rgb(239 68 68 / 0.40); }
+.dark .bg-emerald-500\/3 { background-color: rgb(16 185 129 / 0.03); }
+.dark .hover\:border-blue-300\/50:hover { border-color: rgb(96 165 250 / 0.50); }
+.dark .hover\:bg-blue-50\/30:hover { background-color: rgb(59 130 246 / 0.30); }
+.dark .hover\:bg-cyan-50\/30:hover { background-color: rgb(6 182 212 / 0.30); }
+.dark .hover\:border-emerald-300\/50:hover { border-color: rgb(52 211 153 / 0.50); }
+.dark .hover\:bg-emerald-50\/30:hover { background-color: rgb(16 185 129 / 0.30); }
+.dark .bg-blue-500\/30 { background-color: rgb(59 130 246 / 0.30); }
+.dark .border-orange-200\/20 { border-color: rgb(251 146 60 / 0.20); }
+.dark .text-orange-600\/70 { color: rgb(251 146 60 / 0.70); }
+.dark .bg-purple-50\/10 { background-color: rgb(168 85 247 / 0.10); }
+.dark .text-purple-600\/80 { color: rgb(192 132 252 / 0.80); }
+.dark .text-cyan-600\/70 { color: rgb(34 211 238 / 0.70); }
+.dark .hover\:bg-purple-100:hover { background-color: rgb(168 85 247 / 0.12); }
+.dark .hover\:text-purple-200:hover { color: rgb(192 132 252); }
+.dark .hover\:border-purple-300\/60:hover { border-color: rgb(192 132 252 / 0.60); }
+.dark .bg-yellow-50\/60 { background-color: rgb(234 179 8 / 0.60); }
+.dark .text-red-500\/60 { color: rgb(248 113 113 / 0.60); }
+.dark .bg-orange-50\/30 { background-color: rgb(249 115 22 / 0.30); }
+.dark .text-purple-500\/70 { color: rgb(192 132 252 / 0.70); }
+.dark .text-red-600\/60 { color: rgb(248 113 113 / 0.60); }
+.dark .bg-orange-50\/40 { background-color: rgb(249 115 22 / 0.40); }
+.dark .bg-cyan-50\/40 { background-color: rgb(6 182 212 / 0.40); }
+.dark .border-cyan-300\/40 { border-color: rgb(34 211 238 / 0.40); }
+.dark .hover\:text-emerald-200:hover { color: rgb(52 211 153); }
+.dark .hover\:border-emerald-300\/60:hover { border-color: rgb(52 211 153 / 0.60); }
+.dark .hover\:bg-red-100:hover { background-color: rgb(239 68 68 / 0.12); }
+.dark .hover\:text-red-200:hover { color: rgb(248 113 113); }
+.dark .hover\:border-red-300\/60:hover { border-color: rgb(248 113 113 / 0.60); }
+.dark .hover\:bg-red-700\/30:hover { background-color: rgb(239 68 68 / 0.30); }
+.dark .border-emerald-200\/20 { border-color: rgb(52 211 153 / 0.20); }
+.dark .text-purple-600\/70 { color: rgb(192 132 252 / 0.70); }
+.dark .bg-sfgreen-100 { background-color: rgb(46 138 74 / 0.12); }
+.dark .bg-sforange-100 { background-color: rgb(221 122 1 / 0.12); }
+.dark .bg-sfred-50\/60 { background-color: rgb(186 5 23 / 0.60); }
+.dark .border-sfred-200\/40 { border-color: rgb(224 57 74 / 0.40); }
+.dark .bg-sf-50\/60 { background-color: rgb(27 150 255 / 0.60); }
+.dark .border-sf-200\/40 { border-color: rgb(79 176 246 / 0.40); }
+.dark .bg-sf-50\/40 { background-color: rgb(27 150 255 / 0.40); }
+.dark .text-sfred-600\/80 { color: rgb(224 57 74 / 0.80); }
+.dark .text-sfteal-600 { color: rgb(43 194 185); }
+.dark .focus\:border-sfteal-600\/50:focus { border-color: rgb(43 194 185 / 0.50); }
+.dark .text-sfgreen-600\/80 { color: rgb(69 198 90 / 0.80); }
+.dark .text-sfgreen-600\/70 { color: rgb(69 198 90 / 0.70); }
+.dark .hover\:text-sfpurple-700:hover { color: rgb(174 106 223); }
+.dark .focus\:border-sfpurple-500\/50:focus { border-color: rgb(154 86 212 / 0.50); }
+.dark .bg-sf-100 { background-color: rgb(27 150 255 / 0.12); }
+.dark .bg-sfgreen-400 { background-color: rgb(46 138 74 / 0.35); }
+.dark .bg-sforange-400 { background-color: rgb(221 122 1 / 0.35); }
+.dark .text-sfpurple-700 { color: rgb(174 106 223); }
+.dark .bg-sfteal-400 { background-color: rgb(11 130 124 / 0.35); }
+.dark .bg-sfred-400 { background-color: rgb(186 5 23 / 0.35); }
+.dark .bg-sf-400 { background-color: rgb(27 150 255 / 0.35); }
+.dark .bg-sfpurple-400 { background-color: rgb(142 78 198 / 0.35); }
+.dark .bg-sf-300 { background-color: rgb(27 150 255 / 0.25); }
+.dark .bg-sfpurple-100 { background-color: rgb(142 78 198 / 0.12); }
+.dark .bg-sf-50\/30 { background-color: rgb(27 150 255 / 0.30); }
+.dark .border-sf-200\/50 { border-color: rgb(79 176 246 / 0.50); }
+.dark .hover\:border-sf-600\/50:hover { border-color: rgb(79 176 246 / 0.50); }
+.dark .focus\:border-sf-500\/50:focus { border-color: rgb(79 176 246 / 0.50); }
+.dark .text-sf-700\/80 { color: rgb(124 195 250 / 0.80); }
+.dark .text-sf-500 { color: rgb(79 176 246); }
+.dark .hover\:bg-sf-50\/60:hover { background-color: rgb(27 150 255 / 0.60); }
+.dark .hover\:text-sfteal-700:hover { color: rgb(94 217 198); }
+.dark .bg-sfteal-50\/40 { background-color: rgb(11 130 124 / 0.40); }
+.dark .hover\:bg-sfteal-50\/60:hover { background-color: rgb(11 130 124 / 0.60); }
+.dark .border-sfteal-200\/50 { border-color: rgb(43 194 185 / 0.50); }
+.dark .bg-sfpurple-50\/40 { background-color: rgb(142 78 198 / 0.40); }
+.dark .hover\:bg-sfpurple-50\/60:hover { background-color: rgb(142 78 198 / 0.60); }
+.dark .border-sfpurple-200\/50 { border-color: rgb(154 86 212 / 0.50); }
+.dark .hover\:text-sfgreen-700:hover { color: rgb(94 203 140); }
+.dark .bg-sfgreen-50\/40 { background-color: rgb(46 138 74 / 0.40); }
+.dark .hover\:bg-sfgreen-50\/60:hover { background-color: rgb(46 138 74 / 0.60); }
+.dark .border-sfgreen-200\/50 { border-color: rgb(69 198 90 / 0.50); }
+.dark .bg-sfred-50\/40 { background-color: rgb(186 5 23 / 0.40); }
+.dark .border-sfred-200\/50 { border-color: rgb(224 57 74 / 0.50); }
+.dark .text-sfred-700 { color: rgb(234 104 115); }
+.dark .bg-sfred-50 { background-color: rgb(186 5 23 / 0.08); }
+.dark .border-sfred-200 { border-color: rgb(224 57 74 / 0.30); }
+.dark .border-sf-300 { border-color: rgb(79 176 246 / 0.40); }
+.dark .bg-sf-50\/20 { background-color: rgb(27 150 255 / 0.20); }
+.dark .bg-sfred-50\/10 { background-color: rgb(186 5 23 / 0.10); }
+.dark .bg-sf-50\/5 { background-color: rgb(27 150 255 / 0.05); }
+.dark .bg-sfpurple-50\/5 { background-color: rgb(142 78 198 / 0.05); }
+.dark .hover\:text-sf-600:hover { color: rgb(79 176 246); }
+.dark .hover\:text-sfteal-600:hover { color: rgb(43 194 185); }
+.dark .hover\:border-sfteal-700\/60:hover { border-color: rgb(43 194 185 / 0.60); }
+.dark .hover\:bg-sfteal-50\/30:hover { background-color: rgb(11 130 124 / 0.30); }
+.dark .hover\:bg-purple-50\/50:hover { background-color: rgb(168 85 247 / 0.50); }
+.dark .bg-red-200 { background-color: rgb(239 68 68 / 0.18); }
+.dark .text-red-800 { color: rgb(252 165 165); }
+.dark .bg-orange-200 { background-color: rgb(249 115 22 / 0.18); }
+.dark .text-orange-800 { color: rgb(253 186 116); }
+.dark .bg-orange-50\/10 { background-color: rgb(249 115 22 / 0.10); }
+.dark .text-purple-500 { color: rgb(192 132 252); }
+.dark .border-orange-300\/50 { border-color: rgb(251 146 60 / 0.50); }
+.dark .bg-amber-50\/20 { background-color: rgb(245 158 11 / 0.20); }
+.dark .border-red-300\/60 { border-color: rgb(248 113 113 / 0.60); }
+.dark .text-amber-700 { color: rgb(252 211 77); }
+.dark .bg-amber-100 { background-color: rgb(245 158 11 / 0.12); }
+.dark .border-amber-300\/60 { border-color: rgb(251 191 36 / 0.60); }
+.dark .hover\:bg-emerald-50\/60:hover { background-color: rgb(16 185 129 / 0.60); }
+.dark .hover\:bg-red-50\/50:hover { background-color: rgb(239 68 68 / 0.50); }
+.dark .text-cyan-600\/80 { color: rgb(34 211 238 / 0.80); }
+.dark .bg-amber-200 { background-color: rgb(245 158 11 / 0.18); }
+.dark .text-amber-900 { color: rgb(252 211 77); }
+.dark .bg-emerald-500\/15 { background-color: rgb(16 185 129 / 0.15); }
+.dark .text-blue-600\/80 { color: rgb(96 165 250 / 0.80); }
+.dark .hover\:text-cyan-600:hover { color: rgb(34 211 238); }
+.dark .hover\:border-cyan-300:hover { border-color: rgb(34 211 238 / 0.40); }
+.dark .border-cyan-200\/50 { border-color: rgb(34 211 238 / 0.50); }
+.dark .bg-amber-50\/30 { background-color: rgb(245 158 11 / 0.30); }
+.dark .border-amber-200\/50 { border-color: rgb(251 191 36 / 0.50); }
+.dark .text-amber-500\/80 { color: rgb(251 191 36 / 0.80); }
+.dark .hover\:text-amber-600:hover { color: rgb(251 191 36); }
+.dark .bg-red-400 { background-color: rgb(239 68 68 / 0.35); }
+.dark .focus\:border-indigo-300\/50:focus { border-color: rgb(129 140 248 / 0.50); }
+.dark .bg-indigo-100 { background-color: rgb(99 102 241 / 0.12); }
+.dark .border-indigo-300\/60 { border-color: rgb(129 140 248 / 0.60); }
+.dark .hover\:text-indigo-700:hover { color: rgb(165 180 252); }
+.dark .hover\:border-indigo-300\/50:hover { border-color: rgb(129 140 248 / 0.50); }
+.dark .border-purple-300\/60 { border-color: rgb(192 132 252 / 0.60); }
+.dark .bg-blue-50\/10 { background-color: rgb(59 130 246 / 0.10); }
+.dark .bg-emerald-50\/5 { background-color: rgb(16 185 129 / 0.05); }
+.dark .text-cyan-500 { color: rgb(34 211 238); }
+.dark .border-orange-200\/30 { border-color: rgb(251 146 60 / 0.30); }
+.dark .bg-cyan-50 { background-color: rgb(6 182 212 / 0.08); }
+.dark .bg-cyan-700\/40 { background-color: rgb(6 182 212 / 0.40); }
+.dark .bg-red-700\/40 { background-color: rgb(239 68 68 / 0.40); }
+.dark .bg-pink-100 { background-color: rgb(236 72 153 / 0.12); }
+.dark .text-pink-600 { color: rgb(244 114 182); }
+.dark .bg-emerald-50\/15 { background-color: rgb(16 185 129 / 0.15); }
+.dark .text-indigo-500 { color: rgb(129 140 248); }
+.dark .bg-yellow-300\/60 { background-color: rgb(234 179 8 / 0.60); }
+.dark .text-yellow-900 { color: rgb(253 224 71); }
+.dark .bg-cyan-100\/60 { background-color: rgb(6 182 212 / 0.60); }
+.dark .border-cyan-300 { border-color: rgb(34 211 238 / 0.40); }
+.dark .bg-cyan-50\/20 { background-color: rgb(6 182 212 / 0.20); }
+.dark .border-cyan-200\/30 { border-color: rgb(34 211 238 / 0.30); }
+.dark .text-orange-500\/80 { color: rgb(251 146 60 / 0.80); }
+.dark .hover\:text-cyan-900:hover { color: rgb(103 232 249); }
+.dark .text-cyan-700\/80 { color: rgb(103 232 249 / 0.80); }
+.dark .text-emerald-700\/90 { color: rgb(110 231 183 / 0.90); }
+.dark .text-amber-700\/90 { color: rgb(252 211 77 / 0.90); }
+.dark .border-sf-200 { border-color: rgb(79 176 246 / 0.30); }
+.dark .text-indigo-600\/60 { color: rgb(129 140 248 / 0.60); }
+.dark .text-cyan-700\/90 { color: rgb(103 232 249 / 0.90); }
+.dark .hover\:bg-orange-50\/40:hover { background-color: rgb(249 115 22 / 0.40); }
+.dark .hover\:bg-emerald-50\/40:hover { background-color: rgb(16 185 129 / 0.40); }
+.dark .hover\:bg-indigo-50\/40:hover { background-color: rgb(99 102 241 / 0.40); }
+.dark .border-yellow-200\/30 { border-color: rgb(250 204 21 / 0.30); }
+.dark .text-cyan-600\/90 { color: rgb(34 211 238 / 0.90); }
+.dark .hover\:bg-red-50\/60:hover { background-color: rgb(239 68 68 / 0.60); }
+.dark .hover\:bg-orange-50\/60:hover { background-color: rgb(249 115 22 / 0.60); }
+.dark .border-orange-200\/50 { border-color: rgb(251 146 60 / 0.50); }
+.dark .hover\:bg-blue-50\/60:hover { background-color: rgb(59 130 246 / 0.60); }
+.dark .bg-indigo-50\/40 { background-color: rgb(99 102 241 / 0.40); }
+.dark .border-indigo-200\/50 { border-color: rgb(129 140 248 / 0.50); }
+.dark .hover\:border-emerald-300:hover { border-color: rgb(52 211 153 / 0.40); }
+.dark .hover\:border-yellow-300:hover { border-color: rgb(250 204 21 / 0.40); }
+.dark .hover\:border-red-300:hover { border-color: rgb(248 113 113 / 0.40); }
+.dark .hover\:border-orange-300:hover { border-color: rgb(251 146 60 / 0.40); }
+.dark .hover\:bg-emerald-50:hover { background-color: rgb(16 185 129 / 0.08); }
+.dark .border-emerald-200 { border-color: rgb(52 211 153 / 0.30); }
+.dark .hover\:bg-red-50:hover { background-color: rgb(239 68 68 / 0.08); }
+.dark .hover\:bg-blue-50:hover { background-color: rgb(59 130 246 / 0.08); }
+.dark .bg-orange-50 { background-color: rgb(249 115 22 / 0.08); }

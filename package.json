@@ -1,0 +1,22 @@
+{
+  "name": "mulesoft-ops-dashboard",
+  "version": "1.0.0",
+  "description": "MuleSoft Operations Dashboard — monorepo root",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --prefix-colors \"bgBlue.bold,bgMagenta.bold\" --names \"BACKEND,FRONTEND\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "start": "concurrently --kill-others-on-fail --prefix-colors \"bgBlue.bold,bgMagenta.bold\" --names \"BACKEND,FRONTEND\" \"npm run start -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w frontend",
+    "install:all": "npm install",
+    "install:backend": "npm install -w backend",
+    "install:frontend": "npm install -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  }
+}
