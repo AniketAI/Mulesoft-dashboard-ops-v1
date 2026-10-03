@@ -303,6 +303,52 @@ function extractJobNames(csvText) {
   return rows.slice(1).map((row) => normalizeCell(row[0])).filter(Boolean);
 }
 
+function extractApplicationNames(csvText) {
+  if (!csvText || !csvText.trim()) return [];
+
+  const lines = csvText
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
+
+  if (lines.length < 2) return [];
+
+  const rows = lines.map(parseCsvLine);
+  const headers = rows[0].map((header) => normalizeHeader(header));
+
+  const applicationAliases = [
+    'application',
+    'appname',
+    'app',
+    'applicationname',
+    'integration',
+    'project',
+    'jobapplication',
+    'source',
+  ];
+
+  const applicationIndex = headers.findIndex((header) =>
+    applicationAliases.includes(header)
+  );
+
+  if (applicationIndex < 0) {
+    console.warn(
+      '[HelperPage] CSV does not contain an application-name column.'
+    );
+
+    return [];
+  }
+
+  return [
+    ...new Set(
+      rows
+        .slice(1)
+        .map((row) => normalizeCell(row[applicationIndex]))
+        .filter(Boolean)
+    ),
+  ];
+}
+
+
 function getGlobalSelectedEnvKeys() {
   try {
     const raw = sessionStorage.getItem('userSearch_selections');
@@ -686,592 +732,345 @@ async function resolveJobsFromCsv(
   envKeys = [],
   envLabels = []
 ) {
-  const hasCsv =
-    Boolean(
-      csvText &&
-      csvText.trim()
-    );
+  if (!orgId) {
+    throw new Error('Business Group / Organization ID is required.');
+  }
 
-  const envScopeLabel =
-    Array.isArray(envLabels) &&
-    envLabels.length
-      ? envLabels.join(', ')
-      : 'Selected env scope';
-
-  console.info(
-    '[HelperPage] ========================================'
-  );
-
-  console.info(
-    '[HelperPage] Starting scheduler discovery'
-  );
-
-  console.info(
-    '[HelperPage] CSV uploaded:',
-    hasCsv
-  );
-
-  console.info(
-    '[HelperPage] Helper environments:',
-    envKeys
-  );
+  if (!Array.isArray(envKeys) || envKeys.length === 0) {
+    return [];
+  }
 
   /*
    * ============================================================
-   * PARSE SELECTED ENVIRONMENTS
+   * STEP 1 — CONVERT SELECTED ENVIRONMENT KEYS INTO SCOPES
    *
-   * Values are:
+   * Helper environment keys are stored as:
    *
    *     BG_ID:ENV_ID
+   *
+   * Example:
+   *
+   *     123456:789012
    * ============================================================
    */
 
-  const selectedScopes =
-    (
-      Array.isArray(envKeys)
-        ? envKeys
-        : []
-    )
-      .map(
-        (key) =>
-          String(key).trim()
-      )
-      .map((key) => {
-        const separator =
-          key.indexOf(':');
+  const scopes = envKeys
+    .map((key, index) => {
+      const value = String(key || '').trim();
 
-        if (separator <= 0) {
-          return null;
-        }
+      if (!value) return null;
 
-        const bgId =
-          key
-            .slice(
-              0,
-              separator
-            )
-            .trim();
+      const separatorIndex = value.indexOf(':');
 
-        const envId =
-          key
-            .slice(
-              separator + 1
-            )
-            .trim();
+      if (separatorIndex < 0) {
+        console.warn(
+          '[HelperPage] Invalid environment key:',
+          value
+        );
 
-        if (!bgId || !envId) {
-          return null;
-        }
+        return null;
+      }
 
-        return {
-          key,
-          bgId,
-          envId,
-        };
-      })
-      .filter(Boolean);
+      const bgId = value.slice(0, separatorIndex).trim();
+      const envId = value.slice(separatorIndex + 1).trim();
 
-  if (!selectedScopes.length) {
-    console.warn(
-      '[HelperPage] No valid environment scopes.'
-    );
+      if (!bgId || !envId) {
+        return null;
+      }
 
+      return {
+        bgId,
+        envId,
+        envName: envLabels[index] || '',
+      };
+    })
+    .filter(Boolean);
+
+  if (scopes.length === 0) {
     return [];
   }
 
   console.info(
-    '[HelperPage] Parsed Helper scopes:',
-    selectedScopes
+    '[HelperPage] Discovery scopes:',
+    scopes
   );
 
   /*
    * ============================================================
-   * CSV FILTER
+   * STEP 2 — FETCH ALL APPLICATIONS FROM SELECTED ENVIRONMENTS
    *
-   * CSV is ONLY a frontend filter.
+   * IMPORTANT:
    *
-   * It does NOT control application discovery.
-   * It does NOT control scheduler discovery.
-   * It does NOT control CPS calls.
+   * CSV IS NOT USED HERE.
+   *
+   * We discover every application first.
+   * Scheduler filtering happens later.
    * ============================================================
    */
 
-  let csvApplicationNames = [];
+  const applications = [];
 
-  if (hasCsv) {
-    csvApplicationNames =
-      extractJobNames(csvText)
-        .map(
-          (value) =>
-            String(value)
-              .trim()
-              .replace(
-                /\s+/g,
-                ' '
-              )
-        )
-        .filter(Boolean);
+  for (const scope of scopes) {
+    const { bgId, envId, envName } = scope;
 
-    console.info(
-      '[HelperPage] CSV values:',
-      csvApplicationNames
-    );
+    /*
+     * ------------------------------------------------------------
+     * CloudHub 2.0 applications
+     * ------------------------------------------------------------
+     */
+
+    try {
+      const ch2Response = await api.get(
+        `/applications/cloudhub2/${encodeURIComponent(bgId)}/${encodeURIComponent(envId)}`
+      );
+
+      const ch2Data = ch2Response?.data;
+
+      const ch2Apps = Array.isArray(ch2Data)
+        ? ch2Data
+        : (
+            Array.isArray(ch2Data?.applications)
+              ? ch2Data.applications
+              : Array.isArray(ch2Data?.items)
+                ? ch2Data.items
+                : Array.isArray(ch2Data?.data)
+                  ? ch2Data.data
+                  : []
+          );
+
+      for (const app of ch2Apps) {
+        if (!app?.id) continue;
+
+        applications.push({
+          ...app,
+          deploymentType: 'CloudHub 2.0',
+          _bgId: String(bgId),
+          _envId: String(envId),
+          _envName: envName,
+        });
+      }
+
+      console.info(
+        `[HelperPage] CH2 applications for ${envName || envId}:`,
+        ch2Apps.length
+      );
+    } catch (error) {
+      console.warn(
+        '[HelperPage] Failed to fetch CloudHub 2.0 applications:',
+        {
+          bgId,
+          envId,
+          message: error?.message,
+          status: error?.response?.status,
+        }
+      );
+    }
+
+    /*
+     * ------------------------------------------------------------
+     * CloudHub 1.0 applications
+     * ------------------------------------------------------------
+     */
+
+    try {
+      const ch1Response = await api.get(
+        `/applications/cloudhub1/${encodeURIComponent(envId)}`,
+        {
+          params: {
+            orgId: bgId,
+          },
+        }
+      );
+
+      const ch1Data = ch1Response?.data;
+
+      const ch1Apps = Array.isArray(ch1Data)
+        ? ch1Data
+        : (
+            Array.isArray(ch1Data?.applications)
+              ? ch1Data.applications
+              : Array.isArray(ch1Data?.items)
+                ? ch1Data.items
+                : Array.isArray(ch1Data?.data)
+                  ? ch1Data.data
+                  : []
+          );
+
+      for (const app of ch1Apps) {
+        const appId =
+          app?.id ||
+          app?.applicationId ||
+          app?.name;
+
+        if (!appId) continue;
+
+        applications.push({
+          ...app,
+          id: app.id || app.applicationId || app.name,
+          deploymentType: 'CloudHub 1.0',
+          _bgId: String(bgId),
+          _envId: String(envId),
+          _envName: envName,
+        });
+      }
+
+      console.info(
+        `[HelperPage] CH1 applications for ${envName || envId}:`,
+        ch1Apps.length
+      );
+    } catch (error) {
+      console.warn(
+        '[HelperPage] Failed to fetch CloudHub 1.0 applications:',
+        {
+          bgId,
+          envId,
+          message: error?.message,
+          status: error?.response?.status,
+        }
+      );
+    }
   }
 
   /*
    * ============================================================
-   * STEP 1 — FETCH APPLICATIONS
+   * STEP 3 — DEDUPLICATE APPLICATIONS
    * ============================================================
    */
 
-  const environmentApps = [];
+  const uniqueApplications = [];
+  const applicationKeys = new Set();
 
-  const environmentConcurrency = 4;
+  for (const app of applications) {
+    const key = [
+      app.deploymentType,
+      app._bgId,
+      app._envId,
+      app.id,
+      app.name,
+    ]
+      .map((value) => String(value ?? '').trim().toLowerCase())
+      .join('|');
 
-  let nextScopeIndex = 0;
+    if (applicationKeys.has(key)) {
+      continue;
+    }
 
-  const fetchAppsForScope =
-    async ({
-      bgId,
-      envId,
-    }) => {
-      const apps = [];
-
-      const [
-        ch2Result,
-        ch1Result,
-      ] =
-        await Promise.allSettled([
-          api.get(
-            `/applications/cloudhub2/${bgId}/${envId}`,
-            {
-              params: {
-                limit: 500,
-                offset: 0,
-              },
-            }
-          ),
-
-          api.get(
-            `/applications/cloudhub1/${envId}?orgId=${encodeURIComponent(bgId)}`
-          ),
-        ]);
-
-      /*
-       * CloudHub 2.0
-       */
-
-      if (
-        ch2Result.status ===
-        'fulfilled'
-      ) {
-        const data =
-          ch2Result.value?.data;
-
-        const list =
-          Array.isArray(data)
-            ? data
-            : data?.items ||
-              data?.deployments ||
-              data?.content ||
-              data?.data ||
-              [];
-
-        if (Array.isArray(list)) {
-          for (
-            const app
-            of list
-          ) {
-            const appId =
-              app?.id ||
-              app?.deploymentId;
-
-            if (!appId) {
-              continue;
-            }
-
-            apps.push({
-              ...app,
-
-              id:
-                appId,
-
-              name:
-                app?.name ||
-                app?.application?.name ||
-                appId,
-
-              deploymentType:
-                'CloudHub 2.0',
-
-              _bgId:
-                bgId,
-
-              _envId:
-                envId,
-
-              environment: {
-                ...(app?.environment || {}),
-                id:
-                  envId,
-              },
-            });
-          }
-        }
-      }
-
-      /*
-       * CloudHub 1.0
-       */
-
-      if (
-        ch1Result.status ===
-        'fulfilled'
-      ) {
-        const data =
-          ch1Result.value?.data;
-
-        const list =
-          Array.isArray(data)
-            ? data
-            : data?.applications ||
-              data?.data ||
-              [];
-
-        if (Array.isArray(list)) {
-          for (
-            const app
-            of list
-          ) {
-            const appName =
-              app?.domain ||
-              app?.name;
-
-            if (!appName) {
-              continue;
-            }
-
-            apps.push({
-              ...app,
-
-              id:
-                appName,
-
-              name:
-                appName,
-
-              deploymentType:
-                'CloudHub 1.0',
-
-              _bgId:
-                bgId,
-
-              _envId:
-                envId,
-
-              environment: {
-                ...(app?.environment || {}),
-                id:
-                  envId,
-              },
-            });
-          }
-        }
-      }
-
-      return apps;
-    };
-
-  const scopeWorker =
-    async () => {
-      while (
-        nextScopeIndex <
-        selectedScopes.length
-      ) {
-        const index =
-          nextScopeIndex++;
-
-        const scope =
-          selectedScopes[index];
-
-        try {
-          console.info(
-            `[HelperPage] Loading applications for ${scope.key} (${index + 1}/${selectedScopes.length})`
-          );
-
-          const apps =
-            await fetchAppsForScope(
-              scope
-            );
-
-          environmentApps.push(
-            ...apps
-          );
-
-          console.info(
-            `[HelperPage] ${scope.key}: ${apps.length} applications found.`
-          );
-        } catch (error) {
-          console.warn(
-            `[HelperPage] Application lookup failed for ${scope.key}:`,
-            error
-          );
-        }
-      }
-    };
-
-  await Promise.all(
-    Array.from(
-      {
-        length:
-          Math.min(
-            environmentConcurrency,
-            selectedScopes.length
-          ),
-      },
-      () =>
-        scopeWorker()
-    )
-  );
-
-  /*
-   * ============================================================
-   * STEP 2 — DEDUP APPLICATIONS
-   * ============================================================
-   */
-
-  const uniqueApps =
-    Array.from(
-      new Map(
-        environmentApps.map(
-          (app) => [
-            `${app._bgId}:${app._envId}:${app.deploymentType}:${app.id}`,
-            app,
-          ]
-        )
-      ).values()
-    );
+    applicationKeys.add(key);
+    uniqueApplications.push(app);
+  }
 
   console.info(
     '[HelperPage] Applications discovered:',
-    uniqueApps.length
+    uniqueApplications.length
   );
 
   /*
    * ============================================================
-   * STEP 3 — FETCH SCHEDULES
+   * STEP 4 — FETCH SCHEDULES FOR EVERY APPLICATION
    *
-   * fetchSchedulerRecordsForApp() now guarantees:
+   * fetchSchedulerRecordsForApp() itself guarantees:
    *
-   *     schedule count = 0
-   *          ↓
-   *     no CPS
-   *
-   *     schedule count >= 1
-   *          ↓
-   *     CPS
+   *   1. Scheduler API first
+   *   2. If no schedules -> return []
+   *   3. No application detail
+   *   4. No CPS
+   *   5. If schedules exist -> detail
+   *   6. Then CPS
    * ============================================================
    */
 
-  const scheduledRows = [];
+  const discoveredJobs = [];
 
-  const appConcurrency = 4;
+  const concurrency = 5;
 
-  let nextAppIndex = 0;
-
-  const appWorker =
-    async () => {
-      while (
-        nextAppIndex <
-        uniqueApps.length
-      ) {
-        const index =
-          nextAppIndex++;
-
-        const app =
-          uniqueApps[index];
-
-        try {
-          const schedulerRows =
-            await fetchSchedulerRecordsForApp(
-              app,
-              app._bgId ||
-                orgId
-            );
-
-          /*
-           * No scheduler = application
-           * is automatically excluded.
-           */
-
-          if (
-            schedulerRows.length ===
-            0
-          ) {
-            continue;
-          }
-
-          scheduledRows.push(
-            ...schedulerRows
-          );
-        } catch (error) {
-          console.warn(
-            `[HelperPage] Scheduler lookup failed for ${app.name || app.id}:`,
-            error
-          );
-        }
-      }
-    };
-
-  await Promise.all(
-    Array.from(
-      {
-        length:
-          Math.min(
-            appConcurrency,
-            uniqueApps.length
-          ),
-      },
-      () =>
-        appWorker()
-    )
-  );
-
-  console.info(
-    '[HelperPage] ========================================'
-  );
-
-  console.info(
-    '[HelperPage] Scheduled jobs discovered:',
-    scheduledRows.length
-  );
-
-  /*
-   * ============================================================
-   * STEP 4 — NO CSV
-   *
-   * Return every scheduled job.
-   * ============================================================
-   */
-
-  if (!hasCsv) {
-    console.info(
-      '[HelperPage] No CSV supplied — returning all scheduled jobs.'
-    );
-
-    return scheduledRows;
-  }
-
-  /*
-   * ============================================================
-   * STEP 5 — CSV FILTER AT FRONTEND
-   *
-   * IMPORTANT:
-   * Match CSV values against APPLICATION NAME,
-   * not scheduler/job name.
-   * ============================================================
-   */
-
-  const normalizedCsvApps =
-    csvApplicationNames
-      .map(
-        (name) =>
-          normalizeName(name)
-      )
-      .filter(Boolean);
-
-  if (
-    !normalizedCsvApps.length
+  for (
+    let start = 0;
+    start < uniqueApplications.length;
+    start += concurrency
   ) {
-    console.warn(
-      '[HelperPage] CSV contains no usable application names.'
+    const batch = uniqueApplications.slice(
+      start,
+      start + concurrency
     );
 
-    return scheduledRows;
+    const batchResults = await Promise.all(
+      batch.map((app) =>
+        fetchSchedulerRecordsForApp(
+          app,
+          app._bgId || orgId
+        )
+      )
+    );
+
+    for (const records of batchResults) {
+      if (Array.isArray(records) && records.length > 0) {
+        discoveredJobs.push(...records);
+      }
+    }
+
+    console.info(
+      `[HelperPage] Scheduler discovery progress: ${Math.min(
+        start + concurrency,
+        uniqueApplications.length
+      )}/${uniqueApplications.length} applications`
+    );
   }
 
-  const filteredRows =
-    scheduledRows.filter(
-      (row) => {
-        const appName =
-          normalizeName(
-            row.appName
-          );
+  console.info(
+    '[HelperPage] Total scheduled jobs discovered:',
+    discoveredJobs.length
+  );
 
-        if (!appName) {
-          return false;
-        }
+  /*
+   * ============================================================
+   * STEP 5 — CSV IS OPTIONAL
+   *
+   * NO CSV:
+   *     return every discovered scheduled job.
+   *
+   * CSV:
+   *     use CSV only as an application-name filter.
+   * ============================================================
+   */
 
-        return normalizedCsvApps.some(
-          (csvAppName) =>
-            appName ===
-              csvAppName ||
-            appName.includes(
-              csvAppName
-            ) ||
-            csvAppName.includes(
-              appName
-            )
-        );
-      }
+  if (!csvText || !csvText.trim()) {
+    return discoveredJobs;
+  }
+
+  const applicationNames = extractApplicationNames(csvText);
+
+  if (applicationNames.length === 0) {
+    console.warn(
+      '[HelperPage] CSV provided but no application names were found. Returning all discovered jobs.'
     );
+
+    return discoveredJobs;
+  }
+
+  const normalizedApplicationNames = new Set(
+    applicationNames
+      .map((name) => normalizeName(name))
+      .filter(Boolean)
+  );
+
+  const filteredJobs = discoveredJobs.filter((job) => {
+    const jobAppName = normalizeName(job?.appName);
+
+    return normalizedApplicationNames.has(jobAppName);
+  });
 
   console.info(
     '[HelperPage] CSV application filter:',
     {
-      csvApplications:
-        normalizedCsvApps.length,
-
-      before:
-        scheduledRows.length,
-
-      after:
-        filteredRows.length,
+      csvApplications: applicationNames.length,
+      discoveredJobs: discoveredJobs.length,
+      filteredJobs: filteredJobs.length,
     }
   );
 
-  /*
-   * If CSV applications were supplied but
-   * none were found, return explicit rows
-   * so the user knows which CSV entries
-   * were not discovered.
-   */
-
-  if (
-    filteredRows.length ===
-    0
-  ) {
-    return csvApplicationNames.map(
-      (appName, index) => ({
-        id:
-          `not-found-app-${index}-${normalizeName(appName)}`,
-
-        jobName:
-          'Not found',
-
-        appName:
-          appName,
-
-        environment:
-          envScopeLabel,
-
-        cron:
-          '',
-
-        decryptedCron:
-          '',
-
-        startTime:
-          null,
-
-        nextExecution:
-          null,
-      })
-    );
-  }
-
-  return filteredRows;
+  return filteredJobs;
 }
+
 
 export default function HelperPage() {
   const { orgId } = useAuth();
@@ -1601,82 +1400,55 @@ export default function HelperPage() {
     reader.readAsText(file);
   };
 
-const handleGetDetails = async () => {
-  if (!csvText.trim()) {
-    setError(
-      'Upload a CSV file before fetching job details.'
-    );
-    return;
-  }
+  const handleGetDetails = async () => {
+    if (selectedEnvIds.length === 0) {
+      setRows([]);
+      setError(
+        'Please select at least one environment from the Helper dropdown.'
+      );
+      return;
+    }
 
-  if (
-    selectedEnvIds.length === 0
-  ) {
-    setRows([]);
-    setError(
-      'Please select at least one environment from the Helper dropdown.'
-    );
-    return;
-  }
+    setLoading(true);
+    setError('');
 
-  setLoading(true);
-  setError('');
-  setRows([]);
+    try {
+      console.info(
+        '[HelperPage] Starting job discovery for selected environments:',
+        selectedEnvIds
+      );
 
-  try {
-    console.info(
-      '[HelperPage] Starting backend Helper search',
-      {
-        environments:
-          selectedEnvIds,
-        environmentNames:
-          selectedEnvNames,
-      }
-    );
-
-    const result =
-      await resolveJobsFromCsv(
+      const parsed = await resolveJobsFromCsv(
         csvText,
         orgId,
         selectedEnvIds,
         selectedEnvNames
       );
 
-    console.info(
-      '[HelperPage] Backend Helper returned:',
-      result.length,
-      'rows'
-    );
-
-    setRows(result);
-
-    if (!result.length) {
-      setError(
-        'No scheduler details were found in the selected environment scope.'
+      console.info(
+        '[HelperPage] Job discovery finished with result count:',
+        parsed.length
       );
+
+      setRows(parsed);
+
+      setError(
+        parsed.length
+          ? ''
+          : 'No scheduled jobs were found in the selected environment scope.'
+      );
+    } catch (error) {
+      console.error('[HelperPage] Job discovery failed:', error);
+
+      setRows([]);
+
+      setError(
+        'Job details could not be resolved for the selected environment.'
+      );
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error(
-      '[HelperPage] Job resolution failed:',
-      error
-    );
-
-    setRows([]);
-
-    const backendMessage =
-      error?.response?.data
-        ?.message ||
-      error?.response?.data
-        ?.error;
-
-    setError(
-      backendMessage ||
-      'The scheduler details could not be resolved.'
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   const handleExport = () => {
     if (!jobs.length) return;
 
@@ -1713,7 +1485,7 @@ const handleGetDetails = async () => {
           <button
             type="button"
             onClick={handleGetDetails}
-            disabled={!csvText.trim() || loading || selectedEnvIds.length === 0}
+            disabled={loading || selectedEnvIds.length === 0}
             className="inline-flex items-center gap-2 rounded-xl border border-sf-200 bg-white px-4 py-2.5 text-sm font-semibold text-sf-700 shadow-sm transition hover:bg-sf-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sf-500/30 dark:bg-gray-900 dark:text-sf-200 dark:hover:bg-sf-500/5"
           >
             <Search size={16} />
