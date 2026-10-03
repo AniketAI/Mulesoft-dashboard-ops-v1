@@ -498,55 +498,47 @@ async function resolveJobsFromCsv(
   );
 
   const selectedScopes =
-    (Array.isArray(envKeys)
-      ? envKeys
-      : []
+  (Array.isArray(envKeys)
+    ? envKeys
+    : []
+  )
+    .map((key) =>
+      String(key).trim()
     )
-      .map((key) =>
-        String(key).trim()
-      )
-      .map((key) => {
-        const separator =
-          key.indexOf(':');
+    .map((key) => {
+      const separator =
+        key.indexOf(':');
 
-        if (separator <= 0) {
-          return null;
-        }
+      if (separator <= 0) {
+        return null;
+      }
 
-        const bgId =
-          key
-            .slice(
-              0,
-              separator
-            )
-            .trim();
+      const bgId =
+        key
+          .slice(
+            0,
+            separator
+          )
+          .trim();
 
-        const envId =
-          key
-            .slice(
-              separator + 1
-            )
-            .trim();
+      const envId =
+        key
+          .slice(
+            separator + 1
+          )
+          .trim();
 
-        if (!bgId || !envId) {
-          return null;
-        }
+      if (!bgId || !envId) {
+        return null;
+      }
 
-        const env =
-          envOptions.find(
-            (item) =>
-              item.key === key
-          );
-
-        return {
-          bgId,
-          envId,
-          envName:
-            env?.name ||
-            '',
-        };
-      })
-      .filter(Boolean);
+      return {
+        bgId,
+        envId,
+        envName: '',
+      };
+    })
+    .filter(Boolean);
 
   if (!selectedScopes.length) {
     return names.map(
