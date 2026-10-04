@@ -778,49 +778,42 @@ async function fetchCpsProperties(
   }
 }
 
-function classifyApplication(
-  appName
-) {
-  const name =
-    asString(
-      appName
-    ).toLowerCase();
+function classifyApplication(appName) {
+  const name = asString(appName).toLowerCase();
 
-  /*
-   * Check explicit API suffix/name patterns.
-   *
-   * Examples:
-   * customer-xapi
-   * customer-papi
-   * customer-sapi
-   */
+  // XAPI
   if (
-    /(^|[-_.])xapi($|[-_.])/.test(
-      name
-    ) ||
+    /(^|[-_.])xapi($|[-_.])/.test(name) ||
     name.endsWith('xapi')
   ) {
     return 'XAPI';
   }
 
+  // PAPI
   if (
-    /(^|[-_.])papi($|[-_.])/.test(
-      name
-    ) ||
+    /(^|[-_.])papi($|[-_.])/.test(name) ||
     name.endsWith('papi')
   ) {
     return 'PAPI';
   }
 
+  // SAPI
   if (
-    /(^|[-_.])sapi($|[-_.])/.test(
-      name
-    ) ||
+    /(^|[-_.])sapi($|[-_.])/.test(name) ||
     name.endsWith('sapi')
   ) {
     return 'SAPI';
   }
 
+  // JOB
+  if (
+    /(^|[-_.])job($|[-_.])/.test(name) ||
+    name.endsWith('job')
+  ) {
+    return 'JOB';
+  }
+
+  // Nothing identifies the application type
   return 'UNKNOWN';
 }
 
