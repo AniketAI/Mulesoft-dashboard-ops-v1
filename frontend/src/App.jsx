@@ -18,6 +18,7 @@ import GlobalSearchPage from './pages/GlobalSearchPage';
 import CpsManagerPage from './pages/CpsManagerPage';
 import GlobalCpsManagerPage from './pages/GlobalCpsManagerPage';
 import HelperPage from './pages/HelperPage';
+import DependencyPage from './pages/DependencyPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="global-cps-manager" element={<GlobalCpsManagerPage />} />
             <Route path="helper" element={<Navigate to="/helper/job-helper" replace />} />
             <Route path="helper/job-helper" element={<HelperPage />} />
+            <Route path="helper/dependencies"element={<DependencyPage />}/>
           </Route>
         </Routes>
       </BrowserRouter>

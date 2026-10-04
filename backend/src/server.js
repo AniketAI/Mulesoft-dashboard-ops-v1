@@ -4,6 +4,7 @@ const cors = require('cors');
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
 const helperRoutes = require('./routes/helper');
+const dependencyRoutes = require('./routes/dependencies');
 
 // ── Session secret validation ─────────────────────────────────────────────────
 // Fail fast in production if SESSION_SECRET is not set or is the known default.
@@ -106,6 +107,7 @@ app.use('/api/metrics', metricsRoutes);
 app.use('/api/cps', express.json({ limit: '50mb' }));
 app.use('/api/cps', cpsRoutes);
 app.use('/api/helper', helperRoutes);
+app.use('/api/dependencies', dependencyRoutes);
 app.use('/api/health', healthRoutes);
 
 // Server health check

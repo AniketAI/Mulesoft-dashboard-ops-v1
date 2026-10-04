@@ -12,7 +12,8 @@ import {
   Wrench,
   ChevronRight,
   ChevronDown,
-  Briefcase
+  Briefcase,
+  Network
 } from 'lucide-react';
 
 const navItems = [
@@ -86,6 +87,19 @@ function HelperNavSection({ open, location }) {
             <Briefcase size={14} />
             <span>Job Helper</span>
           </NavLink>
+          <NavLink
+              to="/helper/dependencies"
+              className={({ isActive }) =>
+                `group flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-sf-500/10 text-sf-700 dark:bg-sf-500/15 dark:text-sf-300'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-gray-100'
+                }`
+              }
+            >
+              <Network size={14} />
+              <span>API Dependencies</span>
+            </NavLink>
         </div>
       )}
     </div>
