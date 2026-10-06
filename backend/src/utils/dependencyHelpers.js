@@ -1284,14 +1284,34 @@ function buildDependencyHierarchy(applications, dependencies) {
           continue;
         }
 
-        node.children.push(
-          buildNode(
-            targetApp,
-            level + 1,
-            [...path, app.name],
-            currentPath
-          )
+        const childNode = buildNode(
+          targetApp,
+          level + 1,
+          [...path, app.name],
+          currentPath
         );
+
+        childNode.relationship =
+          dependency.dependencyType || 'DEPENDS_ON';
+
+        childNode.dependsOn = targetApp.name;
+
+        childNode.dependency = {
+          sourceApp: app.name,
+          sourceType: app.type || 'UNKNOWN',
+          targetApp: targetApp.name,
+          targetType: targetApp.type || 'UNKNOWN',
+          relationship:
+            dependency.dependencyType || 'DEPENDS_ON',
+          evidenceSource:
+            dependency.evidenceSource || '',
+          evidenceKey:
+            dependency.evidenceKey || '',
+          confidence:
+            dependency.confidence || '',
+        };
+
+        node.children.push(childNode);
       }
     }
 
