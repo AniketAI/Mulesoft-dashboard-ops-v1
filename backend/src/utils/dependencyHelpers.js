@@ -897,88 +897,55 @@ function extractDependencyEvidence(
 
   const propertyGroups = [
     {
-      source:
-        'RUNTIME_PROPERTY',
-
-      properties:
-        runtimeProperties,
+      source: 'RUNTIME_PROPERTY',
+      properties: runtimeProperties,
     },
-
     {
-      source:
-        'CPS_NON_SECURE_PROPERTY',
-
-      properties:
-        cpsProperties,
+      source: 'CPS_NON_SECURE_PROPERTY',
+      properties: cpsProperties,
     },
   ];
 
-  for (
-    const group of propertyGroups
-  ) {
-    for (
-      const [
-        key,
-        rawValue,
-      ] of Object.entries(
-        group.properties ||
-          {}
-      )
-    )
-    const normalizedKey =
-      String(key || '')
+  const ignoredDependencyKeys = new Set([
+    'cps.projectname',
+    'cloudhub.api.name',
+  ]);
+
+  for (const group of propertyGroups) {
+    for (const [key, rawValue] of Object.entries(
+      group.properties || {}
+    )) {
+      const normalizedKey = String(key || '')
         .trim()
         .toLowerCase();
 
-    const ignoredDependencyKeys = new Set([
-      'cps.projectname',
-      'cloudhub.api.name',
-    ]);
+      if (ignoredDependencyKeys.has(normalizedKey)) {
+        continue;
+      }
 
-    if (ignoredDependencyKeys.has(normalizedKey)) {
-      continue;
-    } 
-    {
       if (
-        rawValue ===
-          undefined ||
-        rawValue ===
-          null
+        rawValue === undefined ||
+        rawValue === null
       ) {
         continue;
       }
 
-      const value =
-        String(rawValue);
+      const value = String(rawValue);
 
-      /*
-       * Do not inspect very large
-       * property values.
-       */
-      if (
-        value.length >
-        5000
-      ) {
+      // Do not inspect very large property values.
+      if (value.length > 5000) {
         continue;
       }
 
-      for (
-        const targetApp of
-          targetApps
-      ) {
+      for (const targetApp of targetApps) {
         if (
-          targetApp.id ===
-            sourceApp.id &&
-          targetApp.deploymentType ===
-            sourceApp.deploymentType
+          targetApp.id === sourceApp.id &&
+          targetApp.deploymentType === sourceApp.deploymentType
         ) {
           continue;
         }
 
-        if (
-          targetApp.name ===
-          sourceApp.name
-        ) {
+        if (targetApp.name === sourceApp.name) {
           continue;
         }
 
@@ -989,21 +956,17 @@ function extractDependencyEvidence(
           )
         ) {
           dependencies.push({
-            sourceApp:
-              sourceApp.name,
+            sourceApp: sourceApp.name,
 
-            sourceType:
-              classifyApplication(
-                sourceApp.name
-              ),
+            sourceType: classifyApplication(
+              sourceApp.name
+            ),
 
-            targetApp:
-              targetApp.name,
+            targetApp: targetApp.name,
 
-            targetType:
-              classifyApplication(
-                targetApp.name
-              ),
+            targetType: classifyApplication(
+              targetApp.name
+            ),
 
             dependencyType:
               'CONFIGURATION_REFERENCE',
