@@ -924,7 +924,21 @@ function extractDependencyEvidence(
         group.properties ||
           {}
       )
-    ) {
+    )
+    const normalizedKey =
+      String(key || '')
+        .trim()
+        .toLowerCase();
+
+    const ignoredDependencyKeys = new Set([
+      'cps.projectname',
+      'cloudhub.api.name',
+    ]);
+
+    if (ignoredDependencyKeys.has(normalizedKey)) {
+      continue;
+    } 
+    {
       if (
         rawValue ===
           undefined ||
