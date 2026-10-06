@@ -1152,6 +1152,162 @@ async function processApplication(
   };
 }
 
+function buildDependencyHierarchy(applications, dependencies) {
+  const appMap = new Map();
+
+  // Index every discovered application
+  for (const app of applications || []) {
+    const key = `${app.bgId || ''}:${app.envId || ''}:${app.deploymentType || ''}:${app.id || app.name}`;
+
+    appMap.set(key, {
+      ...app,
+      children: [],
+    });
+  }
+
+  // Map application names to all matching applications.
+  // Names are used because dependency edges currently
+  // identify sourceApp and targetApp by application name.
+  const appsByName = new Map();
+
+  for (const app of applications || []) {
+    const name = String(app.name || '').toLowerCase();
+
+    if (!name) {
+      continue;
+    }
+
+    if (!appsByName.has(name)) {
+      appsByName.set(name, []);
+    }
+
+    appsByName.get(name).push(app);
+  }
+
+  // Build source -> target adjacency map
+  const dependencyMap = new Map();
+
+  for (const dependency of dependencies || []) {
+    const sourceName =
+      String(dependency.sourceApp || '').toLowerCase();
+
+    const targetName =
+      String(dependency.targetApp || '').toLowerCase();
+
+    if (!sourceName || !targetName) {
+      continue;
+    }
+
+    if (!dependencyMap.has(sourceName)) {
+      dependencyMap.set(sourceName, []);
+    }
+
+    const targets = dependencyMap.get(sourceName);
+
+    const duplicate = targets.some(
+      (existing) =>
+        existing.targetApp === targetName
+    );
+
+    if (!duplicate) {
+      targets.push({
+        ...dependency,
+        targetApp: targetName,
+      });
+    }
+  }
+
+  // Find applications that are targets of another application.
+  const dependedOnNames = new Set();
+
+  for (const dependency of dependencies || []) {
+    const targetName =
+      String(dependency.targetApp || '').toLowerCase();
+
+    if (targetName) {
+      dependedOnNames.add(targetName);
+    }
+  }
+
+  // Applications that nobody depends on become hierarchy roots.
+  const roots = [];
+
+  for (const app of applications || []) {
+    const appName =
+      String(app.name || '').toLowerCase();
+
+    if (!appName) {
+      continue;
+    }
+
+    if (!dependedOnNames.has(appName)) {
+      roots.push(app);
+    }
+  }
+
+  function buildNode(app, level, path, visited) {
+    const appName =
+      String(app.name || '').toLowerCase();
+
+    const node = {
+      id: app.id,
+      name: app.name,
+      type: app.type || 'UNKNOWN',
+      deploymentType: app.deploymentType,
+      bgId: app.bgId,
+      envId: app.envId,
+      environment: app.environment,
+      level,
+      path: [...path, app.name],
+      children: [],
+    };
+
+    // Prevent circular dependencies such as:
+    // A -> B -> C -> A
+    const currentPath = new Set(visited);
+    currentPath.add(appName);
+
+    const childDependencies =
+      dependencyMap.get(appName) || [];
+
+    for (const dependency of childDependencies) {
+      const targetCandidates =
+        appsByName.get(
+          String(dependency.targetApp || '').toLowerCase()
+        ) || [];
+
+      for (const targetApp of targetCandidates) {
+        const targetName =
+          String(targetApp.name || '').toLowerCase();
+
+        if (currentPath.has(targetName)) {
+          continue;
+        }
+
+        node.children.push(
+          buildNode(
+            targetApp,
+            level + 1,
+            [...path, app.name],
+            currentPath
+          )
+        );
+      }
+    }
+
+    return node;
+  }
+
+  return roots.map((root) =>
+    buildNode(
+      root,
+      0,
+      [],
+      new Set()
+    )
+  );
+}
+
 async function discoverDependencies(
   req,
   client,
@@ -1294,10 +1450,16 @@ async function discoverDependencies(
       ).values()
     );
 
+  const dependencyHierarchy =
+  buildDependencyHierarchy(
+    applications,
+    uniqueDependencies
+  );
+
   return {
     applications,
-    dependencies:
-      uniqueDependencies,
+    dependencies: uniqueDependencies,
+    dependencyHierarchy,
     failures,
   };
 }
