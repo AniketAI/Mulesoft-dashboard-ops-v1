@@ -81,6 +81,16 @@ function validateEnvironmentScopes(
  */
 router.post(
   '/discover',
+  (req, res, next) => {
+    console.info('[Dependencies] /discover request reached router', {
+      method: req.method,
+      body: req.body,
+      hasSession: Boolean(req.session),
+      hasToken: Boolean(req.anypointToken),
+    });
+
+    next();
+  },
   authMiddleware,
   async (req, res) => {
     const startedAt =
