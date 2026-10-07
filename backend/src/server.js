@@ -27,6 +27,8 @@ if (!SESSION_SECRET || SESSION_SECRET === DEFAULT_SECRET) {
 }
 
 const fs = require('fs');
+const {initializeDependencySchema,} = require('./db/dependencySchema');
+const {DB_PATH,} = require('./db/dependencyDatabase');
 const authRoutes = require('./routes/auth');
 const organizationsRoutes = require('./routes/organizations');
 const environmentsRoutes = require('./routes/environments');
@@ -44,6 +46,20 @@ const healthRoutes = require('./routes/health');
 const SQLiteStore = require('./utils/sqliteSessionStore');
 const SESSION_DB_DIR = process.env.SESSION_DB_DIR || './data';
 try { if (!fs.existsSync(SESSION_DB_DIR)) fs.mkdirSync(SESSION_DB_DIR, { recursive: true }); } catch {}
+try {
+  initializeDependencySchema();
+
+  console.log(
+    `[DependencyDB] SQLite database initialized: ${DB_PATH}`
+  );
+} catch (error) {
+  console.error(
+    '[DependencyDB] Failed to initialize dependency database:',
+    error
+  );
+
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;

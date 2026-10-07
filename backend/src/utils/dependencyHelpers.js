@@ -1,10 +1,7 @@
 const axios = require('axios');
 const https = require('https');
-
-const {
-  parseCH2Apps,
-  makeCh1Headers,
-} = require('./appHelpers');
+const {saveDiscoveredApplications,} = require('../db/dependencyRepository');
+const {parseCH2Apps,makeCh1Headers,} = require('./appHelpers');
 
 const cpsRoutes = require('../routes/cps');
 
@@ -1365,6 +1362,32 @@ async function discoverDependencies(
         )
       ).values()
     );
+    
+    const applicationsForCache =
+    uniqueApps.map((app) => ({
+      ...app,
+      type: classifyApplication(app.name),
+    }));
+
+  const cacheSaveResult =
+    saveDiscoveredApplications(
+      applicationsForCache
+    );
+
+  if (cacheSaveResult.failed > 0) {
+    failures.push(
+      ...cacheSaveResult.failures.map(
+        (failure) => ({
+          stage:
+            'dependency-cache-save',
+          appName:
+            failure.application,
+          message:
+            failure.message,
+        })
+      )
+    );
+  }
 
   const results =
     await mapWithConcurrency(
