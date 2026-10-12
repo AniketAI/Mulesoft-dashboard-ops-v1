@@ -711,6 +711,13 @@ async function fetchCpsProperties(
         )
       ),
 
+    rawBaseUrl: String(baseUrl),
+    normalizedBaseUrl: String(normalizedBaseUrl),
+    sampleCredentialKeyPrefixes: Object.keys(sessionCpsCreds)
+      .slice(0, 5)
+      .map((key) => key.split('::')[0]),
+
+
   });
 
   if (!credentials) {
