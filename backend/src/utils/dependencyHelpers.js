@@ -1483,6 +1483,35 @@ async function discoverDependencies(
         )
     );
 
+  
+  console.info('[DependencyDiscovery] Application processing summary', {
+    processedApplications: results.filter(
+      (result) => result && !result.__error
+    ).length,
+
+    applicationsWithDependencies: results.filter(
+      (result) =>
+        result &&
+        !result.__error &&
+        Array.isArray(result.dependencies) &&
+        result.dependencies.length > 0
+    ).length,
+
+    totalApplicationDependencies: results.reduce(
+      (total, result) =>
+        total +
+        (Array.isArray(result?.dependencies)
+          ? result.dependencies.length
+          : 0),
+      0
+    ),
+
+    processingErrors: results.filter(
+      (result) => !result || result.__error
+    ).length,
+  });
+
+
   const applications = [];
   const dependencies = [];
 
