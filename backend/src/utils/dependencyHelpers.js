@@ -672,6 +672,35 @@ async function fetchCpsProperties(
   const sessionCpsCreds = req.session?.cpsCreds || {};
   const normalizedBaseUrl = normaliseUrl(baseUrl);
 
+  const credentialHostSummary = Object.keys(sessionCpsCreds).reduce(
+    (summary, key) => {
+      const host = key.split('::')[0];
+
+      let hostname = host;
+
+      try {
+        hostname = new URL(host).hostname;
+      } catch {
+        // Keep the original value if it is not a URL.
+      }
+
+      summary[hostname] = (summary[hostname] || 0) + 1;
+      return summary;
+    },
+    {}
+  );
+
+console.info('[DependencyDiscovery] CPS credential host summary', {
+  requestedHost: (() => {
+    try {
+      return new URL(normalizedBaseUrl).hostname;
+    } catch {
+      return 'invalid-url';
+    }
+  })(),
+  availableCredentialHosts: credentialHostSummary,
+});
+
   console.info('[DependencyDiscovery] CPS credential match diagnostic', {
     credentialsFound: Boolean(credentials),
     envType,
