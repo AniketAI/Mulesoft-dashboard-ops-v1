@@ -13,6 +13,25 @@ const {
   httpsAgent,
 } = cpsRoutes._cpsHelpers;
 
+const sessionCpsCreds = req.session?.cpsCreds || {};
+const normalizedBaseUrl = normaliseUrl(baseUrl);
+
+console.info('[DependencyDiscovery] CPS credential match diagnostic', {
+  credentialsFound: Boolean(credentials),
+  envType,
+  chType,
+  bgOrgIdPresent: Boolean(bgOrgId),
+  sessionCredentialCount: Object.keys(sessionCpsCreds).length,
+  normalizedBaseUrlPresent: Boolean(normalizedBaseUrl),
+  sessionKeysWithSeparator: Object.keys(sessionCpsCreds)
+    .filter((key) => key.includes('::')).length,
+  baseUrlPrefixMatchCount: Object.keys(sessionCpsCreds)
+    .filter((key) => key.startsWith(`${normalizedBaseUrl}::`))
+    .length,
+  credentialEntriesWithClientCredentials: Object.values(sessionCpsCreds)
+    .filter((value) => value?.clientId && value?.clientSecret).length,
+});
+
 const dependencyHttpsAgent =
   httpsAgent ||
   new https.Agent({
