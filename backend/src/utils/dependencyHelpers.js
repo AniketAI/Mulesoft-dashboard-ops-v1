@@ -685,6 +685,32 @@ async function fetchCpsProperties(
       .filter((key) => key.startsWith(`${normalizedBaseUrl}::`)).length,
     credentialEntriesWithClientCredentials: Object.values(sessionCpsCreds)
       .filter((value) => value?.clientId && value?.clientSecret).length,
+
+    
+    sampleSessionKeyShapes: Object.keys(sessionCpsCreds)
+      .slice(0, 5)
+      .map((key) =>
+        key.split('::').map((part, index) =>
+          index === 0
+            ? part.replace(/https?:\/\/[^/]+/i, '<host>')
+            : part
+        )
+      ),
+    matchingBaseUrlKeySamples: Object.keys(sessionCpsCreds)
+      .filter((key) =>
+        key.toLowerCase().includes(
+          normalizedBaseUrl.toLowerCase()
+        )
+      )
+      .slice(0, 5)
+      .map((key) =>
+        key.split('::').map((part, index) =>
+          index === 0
+            ? part.replace(/https?:\/\/[^/]+/i, '<host>')
+            : part
+        )
+      ),
+
   });
 
   if (!credentials) {
