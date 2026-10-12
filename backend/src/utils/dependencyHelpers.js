@@ -4,7 +4,7 @@ const {saveDiscoveredApplications,} = require('../db/dependencyRepository');
 const {parseCH2Apps,makeCh1Headers,} = require('./appHelpers');
 
 const cpsRoutes = require('../routes/cps');
-
+let dependencyDiagnosticCount = 0;
 const {
   normaliseUrl,
   getCredentials,
@@ -1151,6 +1151,25 @@ async function processApplication(
       runtimeProperties,
       cpsResult.properties
     );
+  if (
+    dependencies.length === 0 &&
+    dependencyDiagnosticCount < 5
+  ) {
+    dependencyDiagnosticCount += 1;
+
+    console.warn('[DependencyDiscovery] Zero-dependency diagnostic', {
+      application: app.name,
+      deploymentType: app.deploymentType,
+      runtimePropertyCount: Object.keys(runtimeProperties || {}).length,
+      cpsConfigured: cpsResult.configured,
+      cpsPropertyCount: Object.keys(cpsResult.properties || {}).length,
+      cpsReason: cpsResult.reason,
+      hasCpsBaseUrl: Boolean(cpsBaseUrl),
+      hasProjectName: Boolean(projectName),
+      discoveredApplicationCount: allApps.length,
+    });
+  }
+
 
   return {
     app: {
