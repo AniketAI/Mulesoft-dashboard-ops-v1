@@ -1187,6 +1187,16 @@ async function processApplication(
           }))
       )
       .slice(0, 10),
+    cpsReason: cpsResult.reason,
+
+    sessionHasCpsCreds: Boolean(
+      req.session?.cpsCreds &&
+      Object.keys(req.session.cpsCreds).length > 0
+    ),
+
+    sessionCpsCredsCount: Object.keys(
+      req.session?.cpsCreds || {}
+    ).length,
   });
 
   const dependencies =
