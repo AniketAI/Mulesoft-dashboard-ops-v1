@@ -1167,6 +1167,26 @@ async function processApplication(
       cpsResult.properties && typeof cpsResult.properties === 'object'
         ? Object.keys(cpsResult.properties).slice(0, 8)
         : [],
+
+    cpsBaseUrlConfigured: Boolean(cpsBaseUrl),
+
+    runtimeKeysWithCpsOrUrl: Object.keys(runtimeProperties)
+      .filter((key) => /cps|config.*server|base.*url/i.test(key)),
+
+    runtimeReferenceMatches: Object.entries(runtimeProperties)
+      .flatMap(([key, value]) =>
+        allApps
+          .filter(
+            (targetApp) =>
+              targetApp.name !== app.name &&
+              valueContainsAppReference(value, targetApp)
+          )
+          .map((targetApp) => ({
+            propertyKey: key,
+            targetApp: targetApp.name,
+          }))
+      )
+      .slice(0, 10),
   });
 
   const dependencies =
