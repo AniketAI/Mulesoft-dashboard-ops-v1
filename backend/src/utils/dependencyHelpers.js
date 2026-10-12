@@ -306,11 +306,29 @@ async function discoverAppsForEnvironment(
     ch2Result.status ===
     'fulfilled'
   ) {
-    const ch2Apps =
+  const ch2Apps =
       parseCH2Apps(
         ch2Result.value.data
       );
+    
+  console.info('[DependencyDiscovery] CH2 parser results', {
+    responseItemsCount: Array.isArray(ch2Result.value.data?.items)
+      ? ch2Result.value.data.items.length
+      : null,
 
+    firstItemKeys: Array.isArray(ch2Result.value.data?.items) &&
+      ch2Result.value.data.items.length > 0
+        ? Object.keys(ch2Result.value.data.items[0])
+        : [],
+
+    parsedAppsType: Array.isArray(ch2Apps) ? 'array' : typeof ch2Apps,
+    parsedAppsCount: Array.isArray(ch2Apps) ? ch2Apps.length : null,
+
+    firstParsedAppKeys: Array.isArray(ch2Apps) && ch2Apps.length > 0
+      ? Object.keys(ch2Apps[0])
+      : [],
+  });
+  
     for (
       const app of ch2Apps
     ) {
