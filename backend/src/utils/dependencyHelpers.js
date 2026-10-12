@@ -1144,6 +1144,31 @@ async function processApplication(
       );
   }
 
+  console.info('[DependencyDiscovery] Extraction input diagnostic', {
+    application: app.name,
+    runtimePropertiesType: Array.isArray(runtimeProperties)
+      ? 'array'
+      : typeof runtimeProperties,
+    runtimePropertyCount:
+      runtimeProperties && typeof runtimeProperties === 'object'
+        ? Object.keys(runtimeProperties).length
+        : 0,
+    cpsConfigured: cpsResult.configured,
+    cpsPropertyCount:
+      cpsResult.properties && typeof cpsResult.properties === 'object'
+        ? Object.keys(cpsResult.properties).length
+        : 0,
+    allAppsCount: allApps.length,
+    sampleRuntimePropertyKeys:
+      runtimeProperties && typeof runtimeProperties === 'object'
+        ? Object.keys(runtimeProperties).slice(0, 8)
+        : [],
+    sampleCpsPropertyKeys:
+      cpsResult.properties && typeof cpsResult.properties === 'object'
+        ? Object.keys(cpsResult.properties).slice(0, 8)
+        : [],
+  });
+
   const dependencies =
     extractDependencyEvidence(
       app,
