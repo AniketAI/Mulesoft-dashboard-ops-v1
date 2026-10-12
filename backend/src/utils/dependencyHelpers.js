@@ -266,6 +266,42 @@ async function discoverAppsForEnvironment(
     ),
   ]);
 
+  console.info('[DependencyDiscovery] AMC discovery responses', {
+    environment: scope.envName,
+    bgId: scope.bgId,
+    envId: scope.envId,
+
+    ch2: ch2Result.status === 'fulfilled'
+      ? {
+          status: ch2Result.value.status,
+          responseType: Array.isArray(ch2Result.value.data)
+            ? 'array'
+            : typeof ch2Result.value.data,
+          responseKeys: ch2Result.value.data &&
+            typeof ch2Result.value.data === 'object'
+            ? Object.keys(ch2Result.value.data)
+            : [],
+        }
+      : {
+          error: ch2Result.reason?.message || 'Unknown CH2 error',
+          status: ch2Result.reason?.response?.status || null,
+          code: ch2Result.reason?.code || null,
+        },
+
+    ch1: ch1Result.status === 'fulfilled'
+      ? {
+          status: ch1Result.value.status,
+          responseType: Array.isArray(ch1Result.value.data)
+            ? 'array'
+            : typeof ch1Result.value.data,
+        }
+      : {
+          error: ch1Result.reason?.message || 'Unknown CH1 error',
+          status: ch1Result.reason?.response?.status || null,
+          code: ch1Result.reason?.code || null,
+        },
+  });
+
   if (
     ch2Result.status ===
     'fulfilled'
