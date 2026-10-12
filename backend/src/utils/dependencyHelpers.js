@@ -457,6 +457,14 @@ async function fetchApplicationDetail(
       app
     );
   } catch (error) {
+    console.warn('[DependencyDiscovery] Application detail fetch failed', {
+      application: app?.name,
+      deploymentType: app?.deploymentType,
+      status: error?.response?.status || null,
+      code: error?.code || null,
+      message: error?.message || 'Unknown error',
+    });
+
     return (
       app.raw ||
       app
