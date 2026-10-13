@@ -1,6 +1,12 @@
 const axios = require('axios');
 const https = require('https');
-const {saveDiscoveredApplications,} = require('../db/dependencyRepository');
+const {
+  saveDiscoveredApplications,
+  saveDiscoveredApplication,
+  saveApplicationProperties,
+  startSyncRun,
+  finishSyncRun,
+} = require('../db/dependencyRepository');
 const {parseCH2Apps,makeCh1Headers,} = require('./appHelpers');
 
 const cpsRoutes = require('../routes/cps');
@@ -411,10 +417,7 @@ async function discoverAppsForEnvironment(
   };
 }
 
-async function fetchApplicationDetail(
-  client,
-  app
-) {
+async function fetchApplicationDetail(client,app,options = {}){
   try {
     if (
       app.deploymentType ===
@@ -465,7 +468,9 @@ async function fetchApplicationDetail(
       code: error?.code || null,
       message: error?.message || 'Unknown error',
     });
-
+    if (options.throwOnError) {
+      throw error;
+    }
     return (
       app.raw ||
       app
@@ -1519,11 +1524,219 @@ function buildDependencyHierarchy(applications, dependencies) {
   );
 }
 
-async function discoverDependencies(
-  req,
-  client,
-  scopes
-) {
+
+async function syncDependencyInventory(req, client, scopes) {
+  const syncRunId = startSyncRun(scopes.length);
+  const failures = [];
+
+  let applicationsDiscovered = 0;
+  let propertiesDiscovered = 0;
+
+  try {
+    const scopeResults = await mapWithConcurrency(
+      scopes,
+      ENV_CONCURRENCY,
+      (scope) => discoverAppsForEnvironment(client, scope)
+    );
+
+    const allApps = [];
+
+    for (const result of scopeResults) {
+      if (!result || result.__error) {
+        failures.push({
+          stage: 'application-discovery',
+          message:
+            result?.__error?.message ||
+            'Environment application discovery failed',
+        });
+        continue;
+      }
+
+      allApps.push(...result.apps);
+      failures.push(...result.failures);
+    }
+
+    const uniqueApps = Array.from(
+      new Map(
+        allApps.map((app) => [
+          `${app.bgId}:${app.envId}:${app.deploymentType}:${app.id}`,
+          app,
+        ])
+      ).values()
+    ).map((app) => ({
+      ...app,
+      type: classifyApplication(app.name),
+    }));
+
+    applicationsDiscovered = uniqueApps.length;
+
+    const applicationResults = await mapWithConcurrency(
+      uniqueApps,
+      APP_CONCURRENCY,
+      async (app) => {
+        try {
+          const detail = await fetchApplicationDetail(
+            client,
+            app,
+            { throwOnError: true }
+          );
+
+          const runtimeProperties = extractRuntimeProperties(
+            detail,
+            app
+          );
+
+          const saved = saveDiscoveredApplication(app);
+
+          const runtimeCount = saveApplicationProperties(
+            saved.applicationId,
+            runtimeProperties,
+            {
+              propertyType: 'RUNTIME',
+              source: 'RUNTIME',
+            }
+          );
+
+          let cpsCount = 0;
+
+          const cpsBaseUrl = firstValue(
+            runtimeProperties['cps.configServerBaseUrl'],
+            runtimeProperties['config.server.base.url']
+          );
+
+          const projectName = firstValue(
+            runtimeProperties['cps.projectName'],
+            runtimeProperties['cloudhub.api.name'],
+            app.name
+          );
+
+          const cpsEnvironment = firstValue(
+            runtimeProperties['cps.prefix'],
+            runtimeProperties['cps.environment'],
+            runtimeProperties['cps.environmentName'],
+            app.environment
+          );
+
+          if (cpsBaseUrl) {
+            const cpsResult = await fetchCpsProperties(req, {
+              baseUrl: cpsBaseUrl,
+              environment: cpsEnvironment,
+              envName: app.environment,
+              deploymentType: app.deploymentType,
+              bgOrgId: app.bgId,
+              projectName,
+            });
+
+            if (
+              cpsResult.configured &&
+              !cpsResult.reason
+            ) {
+              cpsCount = saveApplicationProperties(
+                saved.applicationId,
+                cpsResult.properties,
+                {
+                  propertyType: 'NON_SECURE',
+                  source: 'CPS_NON_SECURE',
+                }
+              );
+            } else {
+              failures.push({
+                stage: 'cps-property-fetch',
+                appName: app.name,
+                environment: app.environment,
+                message:
+                  cpsResult.reason ||
+                  'CPS properties could not be retrieved',
+              });
+            }
+          }
+
+          return {
+            success: true,
+            appName: app.name,
+            runtimeProperties: runtimeCount,
+            cpsProperties: cpsCount,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            appName: app.name,
+            environment: app.environment,
+            message: error.message,
+          };
+        }
+      }
+    );
+
+    for (const result of applicationResults) {
+      if (!result || !result.success) {
+        failures.push({
+          stage: 'application-sync',
+          appName: result?.appName,
+          environment: result?.environment,
+          message:
+            result?.message ||
+            'Application synchronization failed',
+        });
+        continue;
+      }
+
+      propertiesDiscovered +=
+        result.runtimeProperties + result.cpsProperties;
+    }
+
+    const successfulApplications = applicationResults.filter(
+      (result) => result?.success
+    ).length;
+
+    const status =
+      failures.length === 0
+        ? 'SUCCEEDED'
+        : successfulApplications > 0
+          ? 'PARTIAL'
+          : 'FAILED';
+
+    const summary = {
+      status,
+      applications: successfulApplications,
+      properties: propertiesDiscovered,
+      endpoints: 0,
+      failures,
+    };
+
+    finishSyncRun(syncRunId, summary);
+
+    return {
+      syncRunId,
+      ...summary,
+      applicationsDiscovered,
+    };
+  } catch (error) {
+    failures.push({
+      stage: 'inventory-sync',
+      message: error.message,
+    });
+
+    const summary = {
+      status: 'FAILED',
+      applications: 0,
+      properties: propertiesDiscovered,
+      endpoints: 0,
+      failures,
+    };
+
+    finishSyncRun(syncRunId, summary);
+
+    return {
+      syncRunId,
+      ...summary,
+      applicationsDiscovered,
+    };
+  }
+}
+
+
+async function discoverDependencies(req,client,scopes){
   const scopeResults =
     await mapWithConcurrency(
       scopes,
@@ -1732,5 +1945,6 @@ async function discoverDependencies(
 
 module.exports = {
   discoverDependencies,
+  syncDependencyInventory,
   classifyApplication,
 };
