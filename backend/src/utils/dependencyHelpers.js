@@ -1574,22 +1574,26 @@ async function syncDependencyInventory(req, client, scopes) {
       uniqueApps,
       APP_CONCURRENCY,
       async (app) => {
-        try {
-          const detail = await fetchApplicationDetail(
-            client,
-            app,
-            { throwOnError: true }
-          );
+          let savedApplication = null;
+
+          try {
+            savedApplication = saveDiscoveredApplication(app);
+
+            const detail = await fetchApplicationDetail(
+              client,
+              app,
+              { throwOnError: true }
+            );
 
           const runtimeProperties = extractRuntimeProperties(
             detail,
             app
           );
 
-          const saved = saveDiscoveredApplication(app);
+          
 
           const runtimeCount = saveApplicationProperties(
-            saved.applicationId,
+            savedApplication.applicationId,
             runtimeProperties,
             {
               propertyType: 'RUNTIME',
@@ -1632,7 +1636,7 @@ async function syncDependencyInventory(req, client, scopes) {
               !cpsResult.reason
             ) {
               cpsCount = saveApplicationProperties(
-                saved.applicationId,
+                savedApplication.applicationId,
                 cpsResult.properties,
                 {
                   propertyType: 'NON_SECURE',
@@ -1660,6 +1664,7 @@ async function syncDependencyInventory(req, client, scopes) {
         } catch (error) {
           return {
             success: false,
+            applicationSaved: Boolean(savedApplication),
             appName: app.name,
             environment: app.environment,
             message: error.message,
@@ -1685,9 +1690,9 @@ async function syncDependencyInventory(req, client, scopes) {
         result.runtimeProperties + result.cpsProperties;
     }
 
-    const successfulApplications = applicationResults.filter(
-      (result) => result?.success
-    ).length;
+    const savedApplications = applicationResults.filter(
+        (result) => result?.success || result?.applicationSaved
+      ).length;
 
     const status =
       failures.length === 0
@@ -1698,7 +1703,7 @@ async function syncDependencyInventory(req, client, scopes) {
 
     const summary = {
       status,
-      applications: successfulApplications,
+      applications: savedApplications,
       properties: propertiesDiscovered,
       endpoints: 0,
       failures,
