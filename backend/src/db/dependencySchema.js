@@ -108,6 +108,25 @@ function initializeDependencySchema() {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
+    
+    CREATE TABLE IF NOT EXISTS sync_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      status TEXT NOT NULL DEFAULT 'RUNNING',
+      selected_scopes INTEGER NOT NULL DEFAULT 0,
+      applications_discovered INTEGER NOT NULL DEFAULT 0,
+      properties_discovered INTEGER NOT NULL DEFAULT 0,
+      endpoints_discovered INTEGER NOT NULL DEFAULT 0,
+      failures_count INTEGER NOT NULL DEFAULT 0,
+      error_summary TEXT,
+      started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      completed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sync_runs_started_at
+      ON sync_runs(started_at);
+
+
     CREATE INDEX IF NOT EXISTS idx_applications_environment
       ON applications(bg_id, env_id);
 
@@ -135,6 +154,35 @@ function initializeDependencySchema() {
     CREATE INDEX IF NOT EXISTS idx_dependencies_target
       ON dependencies(target_application_id);
   `);
+  
+  // Normalize missing deployment types so application identity
+  // remains consistent across synchronization runs.
+  db.prepare(`
+    UPDATE applications
+    SET deployment_type = 'UNKNOWN'
+    WHERE deployment_type IS NULL
+       OR TRIM(deployment_type) = ''
+  `).run();
+
+  // Keep the most recently inserted copy of any legacy duplicate
+  // property before enforcing uniqueness.
+  db.exec(`
+    DELETE FROM properties
+    WHERE id NOT IN (
+      SELECT MAX(id)
+      FROM properties
+      GROUP BY application_id, property_key, property_type
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS
+      idx_properties_unique_identity
+      ON properties(
+        application_id,
+        property_key,
+        property_type
+      );
+  `);
+
 }
 
 module.exports = {
