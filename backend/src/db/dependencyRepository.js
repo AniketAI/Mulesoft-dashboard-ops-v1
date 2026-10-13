@@ -160,35 +160,47 @@ function saveDiscoveredApplications(applications) {
   return { saved, failed: failures.length, failures };
 }
 
+
 function saveApplicationProperties(
   applicationId,
   properties,
   options = {}
 ) {
-  if (!Number.isInteger(Number(applicationId))) {
+  if (
+    !Number.isInteger(Number(applicationId)) ||
+    Number(applicationId) <= 0
+  ) {
     throw new Error('A valid applicationId is required');
   }
 
   const entries = normalizePropertyEntries(properties, options);
-  const savePropertiesTransaction = db.transaction(() => {
+  const propertyType = String(
+    options.propertyType || 'NON_SECURE'
+  ).toUpperCase();
+  const source = options.source || 'UNKNOWN';
+
+  const saveTransaction = db.transaction(() => {
     let saved = 0;
+    const currentKeys = new Set();
 
     for (const entry of entries) {
-      const key = String(entry.key).trim();
+      const key = String(entry.key ?? '').trim();
 
       if (!key) continue;
 
-      const propertyType = String(
-        entry.type || options.propertyType || 'NON_SECURE'
+      const type = String(
+        entry.type || propertyType
       ).toUpperCase();
 
+      const entrySource = entry.source || source;
       const sensitive =
-        propertyType === 'SECURE' ||
+        type === 'SECURE' ||
         SENSITIVE_KEY_PATTERN.test(key);
 
-      // Never persist values for secure or sensitive properties.
       const value =
-        sensitive || entry.value === undefined || entry.value === null
+        sensitive ||
+        entry.value === undefined ||
+        entry.value === null
           ? null
           : typeof entry.value === 'object'
             ? JSON.stringify(entry.value)
@@ -205,7 +217,9 @@ function saveApplicationProperties(
           @propertyType, @source, @isSensitive,
           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
-        ON CONFLICT(application_id, property_key, property_type)
+        ON CONFLICT(
+          application_id, property_key, property_type
+        )
         DO UPDATE SET
           property_value = excluded.property_value,
           source = excluded.source,
@@ -216,19 +230,59 @@ function saveApplicationProperties(
         applicationId: Number(applicationId),
         propertyKey: key,
         propertyValue: value,
-        propertyType,
-        source: entry.source || options.source || 'UNKNOWN',
+        propertyType: type,
+        source: entrySource,
         isSensitive: sensitive ? 1 : 0,
       });
 
+      if (type === propertyType && entrySource === source) {
+        currentKeys.add(key);
+      }
+
       saved += 1;
+    }
+
+    // Only reconcile when the caller confirms that the source
+    // was fetched successfully.
+    if (options.reconcile === true) {
+      const existing = db.prepare(`
+        SELECT property_key
+        FROM properties
+        WHERE application_id = ?
+          AND property_type = ?
+          AND source = ?
+      `).all(
+        Number(applicationId),
+        propertyType,
+        source
+      );
+
+      const deleteProperty = db.prepare(`
+        DELETE FROM properties
+        WHERE application_id = ?
+          AND property_type = ?
+          AND source = ?
+          AND property_key = ?
+      `);
+
+      for (const row of existing) {
+        if (!currentKeys.has(row.property_key)) {
+          deleteProperty.run(
+            Number(applicationId),
+            propertyType,
+            source,
+            row.property_key
+          );
+        }
+      }
     }
 
     return saved;
   });
 
-  return savePropertiesTransaction();
+  return saveTransaction();
 }
+
 
 function saveApplicationEndpoints(
   applicationId,

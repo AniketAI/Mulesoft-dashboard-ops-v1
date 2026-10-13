@@ -4,6 +4,7 @@ const {
   saveDiscoveredApplications,
   saveDiscoveredApplication,
   saveApplicationProperties,
+  saveApplicationEndpoints,
   startSyncRun,
   finishSyncRun,
 } = require('../db/dependencyRepository');
@@ -1525,12 +1526,69 @@ function buildDependencyHierarchy(applications, dependencies) {
 }
 
 
+function extractEndpointCandidates(propertyGroups) {
+  const candidates = new Map();
+
+  for (const group of propertyGroups) {
+    const properties = group.properties || {};
+
+    for (const [propertyKey, rawValue] of Object.entries(properties)) {
+      if (typeof rawValue !== 'string') continue;
+      if (rawValue.length > 10000) continue;
+
+      const matches = rawValue.match(/https?:\/\/[^\s"'<>]+/gi) || [];
+
+      for (const match of matches) {
+        const candidate = match.replace(/[),;}\]]+$/g, '');
+
+        try {
+          const url = new URL(candidate);
+
+          // Do not persist URLs containing embedded credentials.
+          if (url.username || url.password) continue;
+
+          const protocol = url.protocol.replace(':', '').toLowerCase();
+          const host = url.hostname.toLowerCase();
+
+          if (!host) continue;
+
+          // Remove query strings and fragments because they can
+          // contain tokens or other sensitive parameters.
+          const normalizedUrl =
+            `${protocol}://${url.host}${url.pathname}`;
+
+          const identity =
+            `${group.source}|${propertyKey}|${normalizedUrl}`;
+
+          candidates.set(identity, {
+            protocol,
+            host,
+            port: url.port ? Number(url.port) : null,
+            base_path: null,
+            endpoint_path: url.pathname || '/',
+            normalized_url: normalizedUrl,
+            source: group.source,
+            source_property_key: propertyKey,
+            confidence: 'MEDIUM',
+          });
+        } catch {
+          // Ignore values that are not valid absolute URLs.
+        }
+      }
+    }
+  }
+
+  return Array.from(candidates.values());
+}
+
+
 async function syncDependencyInventory(req, client, scopes) {
   const syncRunId = startSyncRun(scopes.length);
   const failures = [];
 
   let applicationsDiscovered = 0;
   let propertiesDiscovered = 0;
+  let endpointsDiscovered = 0;
 
   try {
     const scopeResults = await mapWithConcurrency(
@@ -1598,10 +1656,10 @@ async function syncDependencyInventory(req, client, scopes) {
             {
               propertyType: 'RUNTIME',
               source: 'RUNTIME',
+              reconcile: true,
             }
           );
 
-          let cpsCount = 0;
 
           const cpsBaseUrl = firstValue(
             runtimeProperties['cps.configServerBaseUrl'],
@@ -1621,6 +1679,9 @@ async function syncDependencyInventory(req, client, scopes) {
             app.environment
           );
 
+          let cpsProperties = {};
+          let cpsCount = 0;
+
           if (cpsBaseUrl) {
             const cpsResult = await fetchCpsProperties(req, {
               baseUrl: cpsBaseUrl,
@@ -1635,12 +1696,14 @@ async function syncDependencyInventory(req, client, scopes) {
               cpsResult.configured &&
               !cpsResult.reason
             ) {
+              cpsProperties = cpsResult.properties || {};
               cpsCount = saveApplicationProperties(
                 savedApplication.applicationId,
-                cpsResult.properties,
+                cpsProperties,
                 {
                   propertyType: 'NON_SECURE',
                   source: 'CPS_NON_SECURE',
+                  reconcile: true,
                 }
               );
             } else {
@@ -1654,13 +1717,33 @@ async function syncDependencyInventory(req, client, scopes) {
               });
             }
           }
+          
+          const endpointCandidates = extractEndpointCandidates([
+            {
+              properties: runtimeProperties,
+              source: 'RUNTIME',
+            },
+            {
+              properties: cpsProperties,
+              source: 'CPS_NON_SECURE',
+            },
+          ]);
 
+          const endpointsSaved = saveApplicationEndpoints(
+            savedApplication.applicationId,
+            savedApplication.environmentId,
+            endpointCandidates
+          );
+          
           return {
             success: true,
             appName: app.name,
             runtimeProperties: runtimeCount,
             cpsProperties: cpsCount,
+            endpoints: endpointsSaved,
           };
+
+
         } catch (error) {
           return {
             success: false,
@@ -1686,8 +1769,8 @@ async function syncDependencyInventory(req, client, scopes) {
         continue;
       }
 
-      propertiesDiscovered +=
-        result.runtimeProperties + result.cpsProperties;
+      propertiesDiscovered += result.runtimeProperties + result.cpsProperties;
+      endpointsDiscovered += result.endpoints || 0;
     }
 
     const savedApplications = applicationResults.filter(
@@ -1697,7 +1780,7 @@ async function syncDependencyInventory(req, client, scopes) {
     const status =
       failures.length === 0
         ? 'SUCCEEDED'
-        : successfulApplications > 0
+        : savedApplications > 0
           ? 'PARTIAL'
           : 'FAILED';
 
@@ -1705,7 +1788,7 @@ async function syncDependencyInventory(req, client, scopes) {
       status,
       applications: savedApplications,
       properties: propertiesDiscovered,
-      endpoints: 0,
+      endpoints: endpointsDiscovered,
       failures,
     };
 
